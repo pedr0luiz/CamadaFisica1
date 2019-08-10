@@ -8,8 +8,6 @@
 #  Aplicação 
 ####################################################
 
-print("comecou")
-
 from enlace import *
 import time
 
@@ -18,7 +16,6 @@ import time
 #   python -m serial.tools.list_ports
 
 serialName = "/dev/tty.usbmodem14201" # Mac    (variacao de)
-print("abriu com")
 
 def main():
     # Inicializa enlace ... variavel com possui todos os metodos e propriedades do enlace, que funciona em threading
@@ -28,15 +25,13 @@ def main():
     bitStart = b'ok'
     with open('teste.png','rb') as image:
         txImageBuffer = bytearray(image.read())
-        imageLen = len(txImageBuffer)
-        imageLenBytes = bytes(len(txImageBuffer))
 
-    sendData = imageLenBytes + bytes(":", 'utf-8') + txImageBuffer
+    sendData = txImageBuffer + b'.'
 
     # Log
     print("-------------------------")
     print("Comunicação inicializada")
-    print("  porta : {}".format(com.fisica.name))
+    print("Porta : {}".format(com.fisica.name))
     print("-------------------------")
 
     # rxBitStart, nBitStart = com.getData(len(bitStart))
@@ -46,37 +41,10 @@ def main():
     com.sendData(sendData)
     while(com.tx.getIsBussy()):
         pass
-    
-    # txLen = len(txBuffer)
-    # print(txLen)
-
-    # # Transmite dado
-    # print("tentado transmitir .... {} bytes".format(txLen))
-    # com.sendData(txBuffer)
-
-    # # espera o fim da transmissão
-    # #while(com.tx.getIsBussy()):
-    # #    pass
-    
-    
-    # # Atualiza dados da transmissão
-    # txSize = com.tx.getStatus()
-    # print ("Transmitido       {} bytes ".format(txSize))
-
-    # # # Faz a recepção dos dados
-    # # print ("Recebendo dados .... ")
-    
-    # # #repare que o tamanho da mensagem a ser lida é conhecida!     
-    # # rxBuffer, nRx = com.getData(txLen)
-
-    # # # log
-    # # print ("Lido              {} bytes ".format(nRx))
-    
-    # # print (rxBuffer)
-    # # with open('testeFeito.png', 'wb') as pedroimage:
-    # #   pedroimage.write(rxBuffer)
-
-    
+        
+    # Atualiza dados da transmissão
+    txSize = com.tx.getStatus()
+    print ("Transmitido {} bytes ".format(txSize - len(b'.')))
 
     # Encerra comunicação
     print("-------------------------")
