@@ -8,43 +8,28 @@ serialName = "/dev/cu.usbmodem14101"
 def main():
 
     print("Init Reciever")
+    print("----------------------------")
     com = enlace(serialName)
     com.enable()
 
-    # repare que o tamanho da mensagem a ser lida é conhecida!
+    # Variaveis Iniciais
     connected = False
     bitStart = b'ok'
-    # encoded = binascii.hexlify(bitStart)
-    # print(encoded)
-    # print(binascii.unhexlify(encoded))
-    # # print(com.getData(len(bitStart)))
-
-    # Start Connection
-    # com.sendData(bitStart)
-    # while(com.tx.getIsBussy()):
-    #     pass
 
     # Recieve Data Len
-    startImageGet = False
-    lenImageTxt = b""
-    while not startImageGet:
-        rxBit, nBit = com.getData(1)
-        lenImageTxt += rxBit
-        if(b":" in lenImageTxt):
-            startImageGet = True
+    endDataTransfer = False
+    dataBuffer = b""
+    while not endDataTransfer:
+        rxBuffer, nRxBuffer = com.getData(1)
+        dataBuffer += rxBuffer
+        if(b"." in dataBuffer):
+            endDataTransfer = True
 
-    lenImage = lenImageTxt.split(b":")[0]
-    print(len(binascii.hexlify(lenImage)))
+    print("Received: {}bits".format(len(dataBuffer)))
+    with open('imagemRecebida.png', 'wb') as image:
+        image.write(dataBuffer)
 
-    # rxImage, nxImage = com.getData()
-
-    # with open('imagemRecebida.png', 'wb') as image:
-    #     image.write(rxImage)
-
-    # # log
-    # print("Lido              {} bytes ".format(nRx))
-    # print(rxBuffer)
-    # Encerra comunicação
+    # Fim da transferencia
     print("-------------------------")
     print("Comunicação encerrada")
     print("-------------------------")
