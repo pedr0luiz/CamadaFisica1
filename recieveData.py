@@ -2,7 +2,7 @@ from enlace import *
 import time
 import binascii
 
-serialName = "/dev/cu.usbmodem14101"
+serialName = "/dev/cu.usbmodem14401"
 
 
 def main():
@@ -18,15 +18,16 @@ def main():
 
     # Recieve Data Len
     endDataTransfer = False
-    dataBuffer = b""
+    dataBuffer = b''
     while not endDataTransfer:
         rxBuffer, nRxBuffer = com.getData(1)
         dataBuffer += rxBuffer
-        if(b"." in dataBuffer):
+        if(b'end' in dataBuffer):
             endDataTransfer = True
 
     print("Received: {}bits".format(len(dataBuffer)))
-    with open('imagemRecebida.png', 'wb') as image:
+    dataBuffer = dataBuffer.split(b'end')[0]
+    with open('teste2.png', 'wb') as image:
         image.write(dataBuffer)
 
     # Fim da transferencia
