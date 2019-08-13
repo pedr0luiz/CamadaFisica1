@@ -1,0 +1,45 @@
+body {
+    font-family: Avenir, Geneva, Tahoma, sans-serif;
+    font-weight: 400;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-bar {
+    width: 100%;
+    display: flex;
+    font-weight: 400;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    color: white;
+    background-color: rgb(175, 63, 63);
+}
+
+.nav-bar > h2 {
+    margin-left: 1rem;
+}
+
+.body {
+    width: 60%;
+    margin-top: 5%;
+    display: flex;
+    margin-left: 20%;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.body > a {
+    padding: 1.5rem;
+    background-color: rgb(175, 63, 63);
+    color: white;
+    font-size: 1rem;
+    border-radius: 0.7rem;
+    cursor: pointer;
+}
+
+.container {
+    width: 100%;
+    display: flexbox;
+    justify-content: start;
+}
