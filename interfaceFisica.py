@@ -10,6 +10,7 @@
 import serial
 # importa pacote para conversão binário ascii
 import binascii
+import time
 
 #################################
 # Interface com a camada física #
@@ -23,7 +24,7 @@ class fisica(object):
     def __init__(self, name):
         self.name = name
         self.port = None
-        self.baudrate = 200000
+        self.baudrate = 300000
         #self.baudrate    = 9600
         self.bytesize = serial.EIGHTBITS
         self.parity = serial.PARITY_NONE
