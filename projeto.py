@@ -69,16 +69,20 @@ def SelectFile():
     elif(request.method == "POST"):
         image = request.files["fileName"]
         image = image.read()
-
-        return redirect(url_for('SendingData', image=image))
+        with open ('sendData.png', 'wb') as imageData:
+            imageData.write(image)
+        return redirect(url_for('SendingData'))
 
 
 @app.route("/mandando")
 def SendingData():
-    image = request.args["image"]
-    txImageBuffer = bytearray(image, encoding='utf-8')
+    # image = request.args["image"].replace('%', '')
+    # txImageBuffer = bytearray(image, encoding='utf-8').replace(b'%', b'')
 
-    serialName = "/dev/cu.usbmodem14201"
+    with open ('sendData.png', 'rb') as imageData:
+        txImageBuffer = bytearray(imageData.read())
+
+    serialName = "/dev/ttyACM0"
     com = enlace(serialName)
     com.enable()
     bitStart = b'ok'
@@ -103,7 +107,8 @@ def SendingData():
 
     # Atualiza dados da transmissão
     txSize = com.tx.getStatus()
-    print("Transmitido {} bytes ".format(txSize))
+    # print("Transmitido {} bytes ".format(txSize))
+    print('END APARECE: {} VEZ(ES)'.format(sendData.count(b'end')))
     print('Taxa de transmição: {} bytes/segundo'.format(round(txSize/(end - start), 2)))
 
     print('Recieving data size')
@@ -115,9 +120,9 @@ def SendingData():
         if(endBit in dataBuffer):
             endDataTransfer = True
 
-    success = len(dataBuffer) == txSize
+    status = len(dataBuffer) == txSize
 
-    print("Received: {} bytes \n STATUS: {}".format(len(dataBuffer), success))
+    print("Received: {} bytes \n STATUS: {}".format(len(dataBuffer), status))
 
     # Encerra comunicação
     print("-------------------------")
@@ -125,8 +130,7 @@ def SendingData():
     print("-------------------------")
     com.disable()
 
-    return render_template('select-file.html', success=success)
-
+    return render_template('verification.html', status=status)
 
 if __name__ == '__main__':
     app.run(debug=True)

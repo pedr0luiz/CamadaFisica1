@@ -15,7 +15,7 @@ import time
 #   para saber a sua porta, execute no terminal :
 #   python -m serial.tools.list_ports
 
-serialName = "/dev/tty.usbmodem14201" # Mac    (variacao de)
+serialName = "/dev/ttyACM0"  # Mac    (variacao de)
 
 def main():
     # Inicializa enlace ... variavel com possui todos os metodos e propriedades do enlace, que funciona em threading
@@ -23,10 +23,14 @@ def main():
     # Ativa comunicacao
     com.enable()
     bitStart = b'ok'
-    with open('teste.png','rb') as image:
-        txImageBuffer = bytearray(image.read())
+    with open('1055687.png','rb') as image:
+        imageRead = image.read()
+        #imageRead = imageRead.replace(b'\r', b'').replace(b'\n', b'')
+        #txImageBuffer = bytearray(imageRead)
 
-    sendData = txImageBuffer + b'.'
+    print(imageRead)
+
+    sendData = imageRead + b'end'
 
     # Log
     print("-------------------------")
@@ -44,7 +48,7 @@ def main():
         
     # Atualiza dados da transmissão
     txSize = com.tx.getStatus()
-    print ("Transmitido {} bytes ".format(txSize - len(b'.')))
+    print ("Transmitido {} bytes ".format(txSize))
 
     # Encerra comunicação
     print("-------------------------")
