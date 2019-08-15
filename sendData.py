@@ -24,13 +24,13 @@ def main():
     com.enable()
     bitStart = b'ok'
     with open('1055687.png','rb') as image:
-        imageRead = image.read()
+        imageRead = bytearray(image.read() + b'end')
         #imageRead = imageRead.replace(b'\r', b'').replace(b'\n', b'')
         #txImageBuffer = bytearray(imageRead)
 
     print(imageRead)
 
-    sendData = imageRead + b'end'
+    sendData = imageRead
 
     # Log
     print("-------------------------")

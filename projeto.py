@@ -22,7 +22,7 @@ def index():
 
 @app.route('/recebendo')
 def RecieveData():
-    serialName = "/dev/cu.usbmodem1421"
+    serialName = "/dev/ttyACM0"
     com = enlace(serialName)
     com.enable()
     GotType = False
@@ -43,6 +43,7 @@ def RecieveData():
     # while(com.tx.getIsBussy()):
     #     pass
     # render_template('transmission.html', type=fileType, getData=True)
+    com.fisica.flush()
     while not(GotData):
         tempBuffer, nBuffer = com.getData(1)
         rxBuffer += tempBuffer
@@ -85,10 +86,11 @@ def SendingData():
     serialName = "/dev/ttyACM0"
     com = enlace(serialName)
     com.enable()
-    bitStart = b'ok'
     endBit = b'end'
 
-    sendData = txImageBuffer + endBit
+    sendData = str(len(txImageBuffer)).encode() + endBit + txImageBuffer
+
+    com.fisica.flush()
 
     print("-------------------------")
     print("Comunicação inicializada")
@@ -108,8 +110,9 @@ def SendingData():
     # Atualiza dados da transmissão
     txSize = com.tx.getStatus()
     # print("Transmitido {} bytes ".format(txSize))
+    velocity = round(txSize/(end - start), 2)
     print('END APARECE: {} VEZ(ES)'.format(sendData.count(b'end')))
-    print('Taxa de transmição: {} bytes/segundo'.format(round(txSize/(end - start), 2)))
+    print('Taxa de transmição: {} bytes/segundo'.format(velocity))
 
     print('Recieving data size')
     endDataTransfer = False
@@ -120,7 +123,12 @@ def SendingData():
         if(endBit in dataBuffer):
             endDataTransfer = True
 
-    status = len(dataBuffer) == txSize
+    lenBuffer = dataBuffer.split(b'end')[0]
+
+    status = int(lenBuffer.decode()) == len(txImageBuffer)
+
+    send = len(txImageBuffer)
+    recieved = int(lenBuffer.decode())
 
     print("Received: {} bytes \n STATUS: {}".format(len(dataBuffer), status))
 
@@ -130,7 +138,7 @@ def SendingData():
     print("-------------------------")
     com.disable()
 
-    return render_template('verification.html', status=status)
+    return render_template('verification.html', status=status, velocity=velocity, send=send, recieved=recieved)
 
 if __name__ == '__main__':
     app.run(debug=True)
