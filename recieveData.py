@@ -2,7 +2,7 @@ from enlace import *
 import time
 import binascii
 
-serialName = "/dev/cu.usbmodem14401"
+serialName = "/dev/ttyACM0"
 
 
 def main():

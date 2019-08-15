@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # Protocol Vars
 Start = False
-rxBuffer = b""
+Len = b""
 
 
 @app.route('/')
@@ -22,45 +22,42 @@ def index():
 
 @app.route('/recebendo')
 def RecieveData():
-    serialName = "/dev/cu.usbmodem1421"
+    serialName = "/dev/ttyACM0"
     com = enlace(serialName)
     com.enable()
-    GotType = False
-    GotData = False
-    rxBuffer = b""
-    fileType = ""
+    GotNumber = False
+    rxLenBuffer = b""
     data = b''
-    # while not(GotType):
-    #     tempBuffer, nBuffer = com.getData(1)
-    #     rxBuffer += tempBuffer
-    #     if(b"&" in rxBuffer):
-    #         fileType = rxBuffer.replace(b"&", "").decode("hex")
-    #         print(fileType)
-    #         rxBuffer = b""
-    #         GotType = True
-    # com.sendData(b"&&")
-    # render_template('transmission.html', type=fileType)
-    # while(com.tx.getIsBussy()):
-    #     pass
-    # render_template('transmission.html', type=fileType, getData=True)
-    while not(GotData):
+    com.fisica.flush()
+    while not(GotNumber):
         tempBuffer, nBuffer = com.getData(1)
-        rxBuffer += tempBuffer
-        if(b'end' in rxBuffer):
+        rxLenBuffer += tempBuffer
+        if(b'end' in rxLenBuffer):
             print("---------------------------")
-            print("Size: {}".format(len(rxBuffer)))
+            print("Size: {}".format(len(Len)))
             print("---------------------------")
-            GotData = True
-            data = rxBuffer.split(b'end')[0]
-            with open('./static/images/imgFlask.png', 'wb') as image:
-                image.write(data)
+            GotNumber = True
+        
+    Number = rxLenBuffer.split(b'end')[0]
+    print(int(Number.decode()))
+
+    data, lenData = com.getData(int(Number.decode()))
+
+    with open('./static/images/imgFlask.png', 'wb') as image:
+        image.write(data)
+
+
     print("SENDING RESPONSE")
     print("-----------------------")
-    com.sendData(bytes(len(data))+b'end')
+    com.sendData(str(len(data)).encode() + b'end')
     while(com.tx.getIsBussy()):
         pass
-    return redirect(url_for('index'))
 
+    return redirect(url_for('EndReciever'))
+
+@app.route('/fim-receber')
+def EndReciever():
+    return render_template('transmission.html')
 
 @app.route('/selecionar-arquivo', methods=["GET", "POST"])
 def SelectFile():
@@ -69,6 +66,7 @@ def SelectFile():
     elif(request.method == "POST"):
         image = request.files["fileName"]
         image = image.read()
+
         with open ('sendData.png', 'wb') as imageData:
             imageData.write(image)
         return redirect(url_for('SendingData'))
@@ -98,6 +96,7 @@ def SendingData():
     # rxBitStart, nBitStart = com.getData(len(bitStart))
     # print(rxBitStart, nBitStart)
     # if rxBitStart == bitStart:
+    com.fisica.flush()
     print('Sending image data')
     com.sendData(sendData)
     start = time.time()
@@ -115,8 +114,8 @@ def SendingData():
     endDataTransfer = False
     dataBuffer = b''
     while not endDataTransfer:
-        rxBuffer, nRxBuffer = com.getData(1)
-        dataBuffer += rxBuffer
+        Len, nRxBuffer = com.getData(1)
+        dataBuffer += Len
         if(endBit in dataBuffer):
             endDataTransfer = True
 
