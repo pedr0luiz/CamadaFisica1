@@ -22,7 +22,7 @@ def index():
 
 @app.route('/recebendo')
 def RecieveData():
-    serialName = "/dev/cu.usbmodem14401"
+    serialName = "/dev/cu.usbmodem14101"
     com = enlace(serialName)
     com.enable()
     GotType = False
@@ -69,14 +69,15 @@ def SelectFile():
     elif(request.method == "POST"):
         image = request.files["fileName"]
         image = image.read()
-
         return redirect(url_for('SendingData', image=image))
+    return redirect(url_for('index'))
 
 
 @app.route("/mandando")
 def SendingData():
-    txImageBuffer = bytearray(request.args["image"])
-
+    image = request.args["image"]
+    txImageBuffer = bytearray(request.args["image"], encoding="utf-8")
+    # print(txImageBuffer)
     serialName = "/dev/cu.usbmodem14401"
     com = enlace(serialName)
     com.enable()

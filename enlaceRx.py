@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 #####################################################
 # Camada Física da Computação
-#Carareto
-#08/008/2019
-#  Camada de Enlace 
+# Carareto
+# 08/008/2019
+#  Camada de Enlace
 ####################################################
 
 # Importa pacote de tempo
@@ -14,21 +14,23 @@ import time
 import threading
 
 # Class
+
+
 class RX(object):
     """ This class implements methods to handle the reception
         data over the p2p fox protocol
     """
-    
+
     def __init__(self, fisica):
         """ Initializes the TX class
         """
-        self.fisica      = fisica
-        self.buffer      = bytes(bytearray())
-        self.threadStop  = False
+        self.fisica = fisica
+        self.buffer = bytes(bytearray())
+        self.threadStop = False
         self.threadMutex = True
-        self.READLEN     = 1024
+        self.READLEN = 1024
 
-    def thread(self): 
+    def thread(self):
         """ RX thread, to send data in parallel with the code
         essa é a funcao executada quando o thread é chamado. 
         """
@@ -37,7 +39,7 @@ class RX(object):
                 rxTemp, nRx = self.fisica.read(self.READLEN)
                 if (nRx > 0):
                     self.buffer += rxTemp
-                time.sleep(0.001)
+                time.sleep(0.05)
 
     def threadStart(self):
         """ Starts RX thread (generate and run)
@@ -88,7 +90,7 @@ class RX(object):
         """ retorna e remove n data from buffer
         """
         self.threadPause()
-        b           = self.buffer[0:nData]
+        b = self.buffer[0:nData]
         self.buffer = self.buffer[nData:]
         self.threadResume()
         return(b)
@@ -100,13 +102,10 @@ class RX(object):
 
         while(self.getBufferLen() < size):
             time.sleep(0.001)
-                
-        return(self.getBuffer(size))
 
+        return(self.getBuffer(size))
 
     def clearBuffer(self):
         """ Clear the reception buffer
         """
         self.buffer = b""
-
-
