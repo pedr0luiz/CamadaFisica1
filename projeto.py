@@ -78,7 +78,7 @@ def SendingData():
     image = request.args["image"]
     txImageBuffer = bytearray(image, encoding='utf-8')
 
-    serialName = "/dev/cu.usbmodem1421"
+    serialName = "/dev/cu.usbmodem14201"
     com = enlace(serialName)
     com.enable()
     bitStart = b'ok'
@@ -115,8 +115,9 @@ def SendingData():
         if(endBit in dataBuffer):
             endDataTransfer = True
 
-    print("Received: {} bytes \n STATUS: {}".format(
-        len(dataBuffer), len(dataBuffer) == txSize))
+    success = len(dataBuffer) == txSize
+
+    print("Received: {} bytes \n STATUS: {}".format(len(dataBuffer), success))
 
     # Encerra comunicação
     print("-------------------------")
@@ -124,7 +125,7 @@ def SendingData():
     print("-------------------------")
     com.disable()
 
-    return True
+    return render_template('select-file.html', success=success)
 
 
 if __name__ == '__main__':

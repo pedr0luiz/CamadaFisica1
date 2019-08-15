@@ -15,7 +15,7 @@ import time
 #   para saber a sua porta, execute no terminal :
 #   python -m serial.tools.list_ports
 
-serialName = "/dev/tty.usbmodem1421" # Mac    (variacao de)
+serialName = "/dev/tty.usbmodem14201" # Mac    (variacao de)
 
 def main():
     # Inicializa enlace ... variavel com possui todos os metodos e propriedades do enlace, que funciona em threading
