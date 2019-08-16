@@ -8,7 +8,7 @@ class Protocol:
         self.stuffedEOP = b'1k2j3g4p5o6i7y8m9f0g'
 
     def createHead(self, lenght):
-        self.head = b'0010' + struct.pack("I", lenght)
+        self.head = struct.pack("I", 0) + struct.pack("I", lenght)
 
     def createBuffer(self, payload: bytes):
         payload = self.stuffPayload(payload)
