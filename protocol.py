@@ -37,7 +37,7 @@ class Protocol:
         return { "x": x, "lenghtData": lenData }
 
     def isEOPInPayload(self, payload):
-        if payload.count(self.EOP > 0):
+        if payload.count(self.EOP) > 0:
             print('EOP IN PAYLOAD')
             return True
         return False 
