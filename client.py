@@ -5,7 +5,7 @@ import struct
 
 class Client:
     def __init__(self, name="/dev/ttyACM0"):
-        self.com = enlace("/dev/cu.usbmodem14101")
+        self.com = enlace("/dev/cu.usbmodem14201")
         self.protocol = Protocol()
 
     #Enable Com
