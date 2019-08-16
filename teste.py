@@ -10,7 +10,7 @@ import io
 nome = str(input("Client(C) ou Server(S)? "))
 
 if(nome == "C"):
-  client = Client()
+  client = Client(name="/dev/cu.usbmodem14101")
   client.enable()
   client.getImage()
   client.disable()

@@ -23,7 +23,7 @@ class Protocol:
         return payload.replace(self.stuffedEOP, self.EOP)
     
     def readHead(self, head):
-        lenData = struct.unpack("I",head[:3])
+        lenData = struct.unpack("I",head[:4])
         x = str(head[4:].decode())
         return { "x": x, "lenghtData": lenData }
 

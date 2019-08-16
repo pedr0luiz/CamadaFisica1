@@ -18,7 +18,7 @@ import time
 
 class Server:
     def __init__(self):
-        self.serialName = "/dev/ttyACM0"
+        self.serialName = "/dev/cu.usbmodem14201"
         self.com = enlace(self.serialName)
         self.protocol = Protocol()
 
