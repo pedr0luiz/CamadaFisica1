@@ -23,8 +23,8 @@ class Protocol:
         return payload.replace(self.stuffedEOP, self.EOP)
     
     def readHead(self, head):
-        lenData = struct.unpack("I",head[:4])
-        x = struct.unpack("I",head[4:])
+        lenData = struct.unpack("I",head[:4])[0]
+        x = struct.unpack("I",head[4:])[0]
         return { "x": x, "lenghtData": lenData }
 
     def isEOPInPayload(self, payload):
