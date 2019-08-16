@@ -31,8 +31,8 @@ class Protocol:
     def readHead(self, head):
         print("READ HEAD")
         print(head)
-        lenData = struct.unpack("I",head[:4])[0]
-        x = struct.unpack("I",head[4:])[0]
+        lenData = struct.unpack("I",head[4:])[0]
+        x = struct.unpack("I",head[:4])[0]
         print(lenData, x)
         return { "x": x, "lenghtData": lenData }
 
