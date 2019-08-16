@@ -30,14 +30,15 @@ class Client:
 
     def readEOP(self):
         EOPBuffer = b''
-        while self.protocol.EOP not in EOPBuffer or len(EOPBuffer) <= len(self.protocol.EOP):
-            self.com.getData(1)
+        while self.protocol.EOP not in EOPBuffer or len(EOPBuffer) < len(self.protocol.EOP):
+            dataEOP, lenEOP = self.com.getData(1)
+            EOPBuffer += dataEOP
         if EOPBuffer == self.protocol.EOP:
             return True
         return False
     
     def response(self, lenRecieved):
-        buffer = self.protocol.createBuffer(lenRecieved)
+        buffer = self.protocol.createBuffer(struct.pack("I", lenRecieved))
         self.com.sendData(buffer)
         while(self.com.tx.getIsBussy()):
             pass

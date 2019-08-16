@@ -19,15 +19,11 @@ class Protocol:
         return buffer
 
     def stuffPayload(self, payload):
-        if self.EOP in payload:
-            return payload.replace(self.EOP, self.stuffedEOP)
-        return payload
+        return payload.replace(self.EOP, self.stuffedEOP)
 
     def unStuffPayload(self, payload):
-        if self.stuffedEOP in payload:
-            return payload.replace(self.stuffedEOP, self.EOP)
-        return payload
-    
+        return payload.replace(self.stuffedEOP, self.EOP)
+
     def readHead(self, head):
         print("READ HEAD")
         print(head)
