@@ -24,7 +24,7 @@ class Protocol:
     
     def readHead(self, head):
         lenData = struct.unpack("I",head[:4])
-        x = str(head[4:].decode())
+        x = struct.unpack("I",head[4:])
         return { "x": x, "lenghtData": lenData }
 
     def isEOPInPayload(self, payload):
