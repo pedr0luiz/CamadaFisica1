@@ -9,11 +9,13 @@ class Protocol:
                         'OK': struct.pack("I", 0),
                         'EOP NOT FOUND': struct.pack("I", 1),
                         'EOP IN PAYLOAD': struct.pack("I", 2),
+                        'PAYLOAD LENGHT': struct.pack("I", 3)
                       }
         self.invertedErrors = {
-                        struct.pack("I", 0) : 'OK',
-                        struct.pack("I", 1) : 'EOP NOT FOUND',
-                        struct.pack("I", 2) : 'EOP IN PAYLOAD',
+                        struct.pack("I", 0): 'OK',
+                        struct.pack("I", 1): 'EOP NOT FOUND',
+                        struct.pack("I", 2): 'EOP IN PAYLOAD',
+                        struct.pack("I", 3): 'PAYLOAD LENGHT' 
                       }
 
     def createHead(self, lenght, erro):

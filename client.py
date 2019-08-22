@@ -58,35 +58,42 @@ class Client:
         #------------------------------------------#
         #Separate Len from Head
         head = self.protocol.readHead(headBuffer)
+        lenghtData = head["lenghtData"]
         #------------------------------------------#
         print("--------------------------------------->")
-        print("IMAGE LEN: {}".format(head["lenghtData"]))
+        print("IMAGE LEN: {}".format(lenghtData))
         #------------------------------------------#
         #Get Data
-        dataBuffer, lenDataRecieved = self.com.getData(head["lenghtData"])
+        dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
         #------------------------------------------#
         print("--------------------------------------->")
         print("PAYLOAD LEN: {}".format(lenDataRecieved))
         #------------------------------------------#
-        if(self.protocol.isEOPInPayload(dataBuffer)):
-            #Enviar erro 
-            print("EOP NO PAYLOAD")
-            buffer = self.protocol.createBuffer(b'', 'EOP IN PAYLOAD')
-            print('Sending ERROR')
-            self.com.sendData(buffer)
-            pass
-        else:
-            if(self.readEOP()):
-                print('FOUND EOP at byte {}'.format(self.protocol.headSize + lenDataRecieved))
-                self.response(lenDataRecieved, 'OK')
-                dataBuffer = self.protocol.unStuffPayload(dataBuffer)
-                with open('newImage.png','wb') as image:
-                    image.write(dataBuffer)
-            else:
-                print('EOP NOT FOUND')
-                buffer = self.protocol.createBuffer(b'', 'EOP NOT FOUND')
+
+        if lenghtData == lenDataRecieved:
+            if(self.protocol.isEOPInPayload(dataBuffer)):
+                #Enviar erro 
+                print("EOP NO PAYLOAD")
+                buffer = self.protocol.createBuffer(b'', 'EOP IN PAYLOAD')
                 print('Sending ERROR')
                 self.com.sendData(buffer)
-                #ERRROR
-                pass 
+            else:
+                if(self.readEOP()):
+                    print('FOUND EOP at byte {}'.format(self.protocol.headSize + lenDataRecieved))
+                    self.response(lenDataRecieved, 'OK')
+                    dataBuffer = self.protocol.unStuffPayload(dataBuffer)
+                    with open('newImage.png','wb') as image:
+                        image.write(dataBuffer)
+                else:
+                    print('EOP NOT FOUND')
+                    buffer = self.protocol.createBuffer(b'', 'EOP NOT FOUND')
+                    print('Sending ERROR')
+                    self.com.sendData(buffer)
+                    #ERRROR
+        else:
+            print('ERROR PAYLOAD LENGHT')
+            buffer = self.protocol.createBuffer(b'', 'PAYLOAD LENGHT')
+            print('Sending ERROR')
+            self.com.sendData(buffer)
+            #ERRO
     
