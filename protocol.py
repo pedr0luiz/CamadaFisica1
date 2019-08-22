@@ -39,5 +39,6 @@ class Protocol:
     def isEOPInPayload(self, payload):
         if payload.count(self.EOP) > 0:
             print('{} EOP IN PAYLOAD'.format(payload.count(self.EOP)))
+            print('EOP IN BYTE: {}'.format(payload.index(self.EOP) + self.headSize))
             return True
         return False 

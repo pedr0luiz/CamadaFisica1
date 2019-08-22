@@ -71,18 +71,22 @@ class Client:
         if(self.protocol.isEOPInPayload(dataBuffer)):
             #Enviar erro 
             print("EOP NO PAYLOAD")
-            self.protocol.createBuffer(b'', 'EOP IN PAYLOAD')
+            buffer = self.protocol.createBuffer(b'', 'EOP IN PAYLOAD')
+            print('Sending ERROR')
+            self.com.sendData(buffer)
             pass
         else:
             if(self.readEOP()):
-                print('FOUND EOP')
+                print('FOUND EOP at byte {}'.format(self.protocol.headSize + lenDataRecieved))
                 self.response(lenDataRecieved, 'OK')
                 dataBuffer = self.protocol.unStuffPayload(dataBuffer)
-                with open('newImage.txt','wb') as image:
+                with open('newImage.png','wb') as image:
                     image.write(dataBuffer)
             else:
                 print('EOP NOT FOUND')
-                self.protocol.createBuffer(b'', 'EOP NOT FOUND')
+                buffer = self.protocol.createBuffer(b'', 'EOP NOT FOUND')
+                print('Sending ERROR')
+                self.com.sendData(buffer)
                 #ERRROR
                 pass 
     
