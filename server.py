@@ -18,7 +18,7 @@ import time
 
 class Server:
     def __init__(self):
-        self.serialName = "/dev/cu.usbmodem14201"
+        self.serialName = "/dev/ttyACM0"
         self.com = enlace(self.serialName)
         self.protocol = Protocol()
 
@@ -27,12 +27,13 @@ class Server:
         print("Comunicação inicializada")
         print("-------------------------")
         self.com.enable()
-        self.com.fisica.flush()
+        #self.com.fisica.flush()
 
     def disable(self):
         print("-------------------------")
         print("Comunicação encerrada")
         print("-------------------------")
+        #self.com.fisica.flush()
         self.com.disable()
 
     def readEOP(self):

@@ -30,15 +30,15 @@ class Client:
 
     def readEOP(self):
         EOPBuffer = b''
-        while self.protocol.EOP not in EOPBuffer or len(EOPBuffer) < len(self.protocol.EOP):
+        while self.protocol.EOP not in EOPBuffer and len(EOPBuffer) < len(self.protocol.EOP):
             dataEOP, lenEOP = self.com.getData(1)
             EOPBuffer += dataEOP
         if EOPBuffer == self.protocol.EOP:
             return True
         return False
     
-    def response(self, lenRecieved):
-        buffer = self.protocol.createBuffer(struct.pack("I", lenRecieved))
+    def response(self, lenRecieved, erro):
+        buffer = self.protocol.createBuffer(struct.pack("I", lenRecieved), erro)
         self.com.sendData(buffer)
         while(self.com.tx.getIsBussy()):
             pass
@@ -70,13 +70,19 @@ class Client:
         #------------------------------------------#
         if(self.protocol.isEOPInPayload(dataBuffer)):
             #Enviar erro 
+            print("EOP NO PAYLOAD")
+            self.protocol.createBuffer(b'', 'EOP IN PAYLOAD')
             pass
         else:
             if(self.readEOP()):
-                self.response(lenDataRecieved)
-                with open('newImage.png','wb') as image:
+                print('FOUND EOP')
+                self.response(lenDataRecieved, 'OK')
+                dataBuffer = self.protocol.unStuffPayload(dataBuffer)
+                with open('newImage.txt','wb') as image:
                     image.write(dataBuffer)
             else:
+                print('EOP NOT FOUND')
+                self.protocol.createBuffer(b'', 'EOP NOT FOUND')
                 #ERRROR
                 pass 
     
