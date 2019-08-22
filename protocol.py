@@ -49,3 +49,48 @@ class Protocol:
             print('EOP IN BYTE: {}'.format(payload.index(self.EOP) + self.headSize))
             return True
         return False 
+
+    def response(self, com, lenRecieved, erro):
+        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro)
+        com.sendData(buffer)
+        while(com.tx.getIsBussy()):
+            pass
+
+    def readEOP(self, com):
+        EOPBuffer = b''
+        while self.EOP not in EOPBuffer and len(EOPBuffer) < len(self.EOP):
+            dataEOP, lenEOP = com.getData(1)
+            EOPBuffer += dataEOP
+        if EOPBuffer == self.EOP:
+            return True
+        return False
+
+    def handlePackage(self, com, lenghtData, dataBuffer):
+        lenDataRecieved = len(dataBuffer)
+        if lenghtData == lenDataRecieved:
+            if(self.isEOPInPayload(dataBuffer)):
+                #Enviar erro 
+                print("EOP NO PAYLOAD")
+                print('Sending ERROR')
+                self.response(com, lenDataRecieved, 'EOP IN PAYLOAD')
+                return False
+            else:
+                if(self.readEOP(com)):
+                    print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
+                    self.response(com, lenDataRecieved, 'OK')
+                    dataBuffer = self.unStuffPayload(dataBuffer)
+                    with open('newImage.png','wb') as image:
+                        image.write(dataBuffer)
+                    return True
+                else:
+                    print('EOP NOT FOUND')
+                    print('Sending ERROR')
+                    self.response(com, lenDataRecieved, 'EOP NOT FOUND')
+                    return False
+                    #ERRROR
+        else:
+            print('ERROR PAYLOAD LENGHT')
+            print('Sending ERROR')
+            self.response(com, lenDataRecieved, 'PAYLOAD LENGHT')
+            return False
+            #ERRO
