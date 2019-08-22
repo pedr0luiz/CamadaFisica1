@@ -17,15 +17,21 @@ class Protocol:
                         struct.pack("I", 2): 'EOP IN PAYLOAD',
                         struct.pack("I", 3): 'PAYLOAD LENGHT' 
                       }
+        self.payloadSize = 128
 
-    def createHead(self, lenght, erro):
+    def createHead(self, lenght, erro, idxPackage, numberOfPackages: int):
         print("CREATE HEAD")
         print(struct.pack("I", 0) + struct.pack("I", lenght))
-        return self.errors[erro] + struct.pack("I", lenght)
+        total = numberOfPackages.to_bytes(2, byteorder="little") 
+        index = idxPackage.to_bytes(2, byteorder="little")
+        erro = self.errors[erro]
+        size = struct.pack("I", lenght)
 
-    def createBuffer(self, payload, erro):
-        payload = self.stuffPayload(payload) + self.EOP
-        head = self.createHead(len(payload ), erro)
+        return  self.errors[erro] + (total + index) + size
+
+    def createBuffer(self, payload, erro, idxPackage, numberOfPackages):
+        payload = self.stuffPayload(payload)
+        head = self.createHead(len(payload), erro, idxPackage, numberOfPackages)
         buffer = head + payload  + self.EOP
         return buffer
 
@@ -38,10 +44,11 @@ class Protocol:
     def readHead(self, head):
         print("READ HEAD")
         print(head)
-        lenData = struct.unpack("I",head[4:])[0]
-        erro = struct.unpack("I",head[:4])[0]
-        print(lenData, head[:4])
-        return { "error": head[:4], "lenghtData": lenData }
+        lenData = struct.unpack("I",head[-4:])[0]
+        erro = head[:4]
+        packageIdx = head[6 : 8].from_bytes(2, byteorder="little")
+        packageTotal = head[4 : 6].from_bytes(2, byteorder="little")
+        return { "error": erro, "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
 
     def isEOPInPayload(self, payload):
         if payload.count(self.EOP) > 0:
@@ -94,3 +101,4 @@ class Protocol:
             self.response(com, lenDataRecieved, 'PAYLOAD LENGHT')
             return False
             #ERRO
+    

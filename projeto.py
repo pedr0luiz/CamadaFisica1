@@ -53,7 +53,7 @@ def SendingData():
     status, recieved = server.getResponse(txImageBufferLen)
     server.disable()
 
-    return render_template('verification.html', status=status, velocity=txImageBufferLen, send=txImageBufferLen, recieved=recieved)
+    return render_template('verification.html', status=status, velocity=bitRate, send=txImageBufferLen, recieved=recieved)
 
 if __name__ == '__main__':
     app.run(debug=True)

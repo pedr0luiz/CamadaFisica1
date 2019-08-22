@@ -6,6 +6,8 @@ import time
 import binascii
 import threading
 import io
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
 nome = str(input("Client(C) ou Server(S)? "))
 
@@ -15,8 +17,11 @@ if(nome == "C"):
   client.getImage()
   client.disable()
 else:
+  Tk().withdraw()
+  filePath = askopenfilename()
   server = Server()
   server.enable()
-  txImageBufferLen, bitRate = server.sendImage('sendData.png')
-  server.getResponse(txImageBufferLen)
+  with open(filePath, 'rb') as image:
+    imageBytes = image.read()
+  server.sendPackages(imageBytes)
   server.disable()

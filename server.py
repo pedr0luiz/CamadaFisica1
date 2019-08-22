@@ -11,6 +11,7 @@
 from enlace import *
 from protocol import *
 import time
+import math
 
 # Serial Com Port
 #   para saber a sua porta, execute no terminal :
@@ -50,7 +51,7 @@ class Server:
         with open (imageName, 'rb') as imageData:
             payload = bytearray(imageData.read())
 
-        buffer = self.protocol.createBuffer(payload, "OK")
+        buffer = self.protocol.createBuffer(payload, "OK", 0, 1)
 
         print("-----------------------------------------------")
         print("OVERHEAD: {:.4f} ".format((len(buffer)/len(payload))))
@@ -99,6 +100,8 @@ class Server:
         print("RESPONSE STATUS: ")
         print(self.protocol.invertedErrors[head["error"]])
         print("-----------------------------------------------------------")
+
+        return self.protocol.invertedErrors[head["error"]], lenDataRecieved
         # if(self.protocol.isEOPInPayload(dataBuffer)):
         #     #Enviar erro 
         #     pass
@@ -110,3 +113,28 @@ class Server:
         #         print('ERRO NA RESPONSE')
         #         pass 
     
+    def sendPackages(self, totalBuffer):
+        packages = self.createPackages(totalBuffer)
+        for pk in packages:
+            self.com.sendData(pk)
+            while(self.com.tx.getIsBussy()):
+                pass
+            error, lenRecieved = self.getResponse(self.protocol.payloadSize)
+            if(error != "OK"):
+                print("Error in package")
+                break;
+
+    def createPackages(self, payload):
+        numberOfPackages = math.ceil(len(payload)/self.protocol.payloadSize)
+        packages = []
+        for i in range(0, numberOfPackages - 1):
+            if((i+1) * self.protocol.payloadSize > len(payload)):
+                packagePayload = payload[i*self.protocol.payloadSize :]
+            else:
+                packagePayload = payload[i*self.protocol.payloadSize : (i+1) * self.protocol.payloadSize]
+            package = self.protocol.createBuffer(packagePayload, "OK", i, numberOfPackages)
+            packages.append(package)
+        return packages
+
+
+
