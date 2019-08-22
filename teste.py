@@ -18,5 +18,5 @@ else:
   server = Server()
   server.enable()
   txImageBufferLen, bitRate = server.sendImage('sendData.png')
-  status, recieved = server.getResponse(txImageBufferLen)
+  server.getResponse(txImageBufferLen)
   server.disable()

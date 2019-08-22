@@ -50,7 +50,11 @@ class Server:
         with open (imageName, 'rb') as imageData:
             payload = bytearray(imageData.read())
 
-        buffer = self.protocol.createBuffer(payload)
+        buffer = self.protocol.createBuffer(payload, "OK")
+
+        print("-----------------------------------------------")
+        print("OVERHEAD: {:.4f} ".format((len(buffer)/len(payload))))
+        print("------------------------------------------------ \n")
 
         print('Sending image data')
         self.com.sendData(buffer)
@@ -91,14 +95,18 @@ class Server:
         print("--------------------------------------->")
         print("PAYLOAD LEN: {}".format(lenDataRecieved))
         #------------------------------------------#
-        if(self.protocol.isEOPInPayload(dataBuffer)):
-            #Enviar erro 
-            pass
-        else:
-            if(self.readEOP()):
-                return size == lenDataRecieved, lenDataRecieved
-            else:
-                #ERRROR
-                print('ERRO NA RESPONSE')
-                pass 
+        print("-----------------------------------------------------------")
+        print("RESPONSE STATUS: ")
+        print(self.protocol.invertedErrors[head["error"]])
+        print("-----------------------------------------------------------")
+        # if(self.protocol.isEOPInPayload(dataBuffer)):
+        #     #Enviar erro 
+        #     pass
+        # else:
+        #     if(self.readEOP()):
+        #         return size == lenDataRecieved, lenDataRecieved
+        #     else:
+        #         #ERRROR
+        #         print('ERRO NA RESPONSE')
+        #         pass 
     

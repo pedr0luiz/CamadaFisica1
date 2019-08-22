@@ -10,6 +10,11 @@ class Protocol:
                         'EOP NOT FOUND': struct.pack("I", 1),
                         'EOP IN PAYLOAD': struct.pack("I", 2),
                       }
+        self.invertedErrors = {
+                        struct.pack("I", 0) : 'OK',
+                        struct.pack("I", 1) : 'EOP NOT FOUND',
+                        struct.pack("I", 2) : 'EOP IN PAYLOAD',
+                      }
 
     def createHead(self, lenght, erro):
         print("CREATE HEAD")
@@ -17,9 +22,9 @@ class Protocol:
         return self.errors[erro] + struct.pack("I", lenght)
 
     def createBuffer(self, payload, erro):
-        payload = self.stuffPayload(payload)
-        head = self.createHead(len(payload), erro)
-        buffer = head + payload + self.EOP
+        payload = self.stuffPayload(payload) + self.EOP
+        head = self.createHead(len(payload ), erro)
+        buffer = head + payload  + self.EOP
         return buffer
 
     def stuffPayload(self, payload):
@@ -33,8 +38,8 @@ class Protocol:
         print(head)
         lenData = struct.unpack("I",head[4:])[0]
         erro = struct.unpack("I",head[:4])[0]
-        print(lenData, erro)
-        return { "erro": erro, "lenghtData": lenData }
+        print(lenData, head[:4])
+        return { "error": head[:4], "lenghtData": lenData }
 
     def isEOPInPayload(self, payload):
         if payload.count(self.EOP) > 0:
