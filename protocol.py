@@ -2,7 +2,7 @@ import struct
 
 class Protocol:
     def __init__(self):
-        self.headSize = 8
+        self.headSize = 12
         self.EOP = b'kjgpoiymf'
         self.stuffedEOP = b'1k2j3g4p5o6i7y8m9f0g'
         self.errors = {
@@ -27,7 +27,7 @@ class Protocol:
         erro = self.errors[erro]
         size = struct.pack("I", lenght)
 
-        return  self.errors[erro] + (total + index) + size
+        return erro + total + index + size
 
     def createBuffer(self, payload, erro, idxPackage, numberOfPackages):
         payload = self.stuffPayload(payload)
@@ -43,12 +43,11 @@ class Protocol:
 
     def readHead(self, head):
         print("READ HEAD")
-        print(head)
         lenData = struct.unpack("I",head[-4:])[0]
         erro = head[:4]
-        packageIdx = head[6 : 8].from_bytes(2, byteorder="little")
-        packageTotal = head[4 : 6].from_bytes(2, byteorder="little")
-        return { "error": erro, "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
+        packageIdx = int.from_bytes(head[6 : 8], byteorder="little")
+        packageTotal = int.from_bytes(head[4 : 6], byteorder="little")
+        return { "error": self.invertedErrors[erro], "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
 
     def isEOPInPayload(self, payload):
         if payload.count(self.EOP) > 0:
@@ -57,8 +56,10 @@ class Protocol:
             return True
         return False 
 
-    def response(self, com, lenRecieved, erro):
-        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro)
+    def response(self, com, lenRecieved, erro, head):
+        totalPackages = head["packageTotal"]
+        idxReceived = head["packageIdx"]
+        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro, idxReceived, totalPackages)
         com.sendData(buffer)
         while(com.tx.getIsBussy()):
             pass
@@ -72,33 +73,32 @@ class Protocol:
             return True
         return False
 
-    def handlePackage(self, com, lenghtData, dataBuffer):
+    def handlePackage(self, com, head, dataBuffer):
         lenDataRecieved = len(dataBuffer)
+        lenghtData = head["lenghtData"]
         if lenghtData == lenDataRecieved:
             if(self.isEOPInPayload(dataBuffer)):
                 #Enviar erro 
                 print("EOP NO PAYLOAD")
                 print('Sending ERROR')
-                self.response(com, lenDataRecieved, 'EOP IN PAYLOAD')
+                self.response(com, lenDataRecieved, 'EOP IN PAYLOAD', head)
                 return False
             else:
                 if(self.readEOP(com)):
                     print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
-                    self.response(com, lenDataRecieved, 'OK')
+                    self.response(com, lenDataRecieved, 'OK', head)
                     dataBuffer = self.unStuffPayload(dataBuffer)
-                    with open('newImage.png','wb') as image:
-                        image.write(dataBuffer)
-                    return True
+                    return dataBuffer
                 else:
                     print('EOP NOT FOUND')
                     print('Sending ERROR')
-                    self.response(com, lenDataRecieved, 'EOP NOT FOUND')
+                    self.response(com, lenDataRecieved, 'EOP NOT FOUND', head)
                     return False
                     #ERRROR
         else:
             print('ERROR PAYLOAD LENGHT')
             print('Sending ERROR')
-            self.response(com, lenDataRecieved, 'PAYLOAD LENGHT')
+            self.response(com, lenDataRecieved, 'PAYLOAD LENGHT', head)
             return False
             #ERRO
     

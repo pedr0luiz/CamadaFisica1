@@ -29,32 +29,32 @@ class Client:
         self.com.disable()
 
     #Get Image
-    def getImage(self):
+    def getPackage(self):
         #------------------------------------------#
         print("########################################")
         print("INIT RECIEVER")
         print("########################################")
         #------------------------------------------#
-        #Get Head
-        headBuffer, lenHead = self.com.getData(self.protocol.headSize)
-        #------------------------------------------#
-        print("--------------------------------------->")
-        print("HEAD: {}".format(headBuffer))
-        #------------------------------------------#
-        #Separate Len from Head
-        head = self.protocol.readHead(headBuffer)
-        lenghtData = head["lenghtData"]
-        #------------------------------------------#
-        print("--------------------------------------->")
-        print("IMAGE LEN: {}".format(lenghtData))
-        #------------------------------------------#
-        #Get Data
-        dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
-        #------------------------------------------#
-        print("--------------------------------------->")
-        print("PAYLOAD LEN: {}".format(lenDataRecieved))
-        #------------------------------------------#
+        totalPackages = None
+        packageIdx = 0
+        payloadReceived = b''
+        while totalPackages == None or packageIdx < totalPackages:
+            headBuffer, lenHead = self.com.getData(self.protocol.headSize)
+            head = self.protocol.readHead(headBuffer)
+            print('HEAD LIDO: {}'.format(head))
+            if head["error"] == 'OK':
+                totalPackages = head["packageTotal"]
+                lenghtData = head["lenghtData"]
+                idxReceived = head["packageIdx"]
+                dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
+                dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer)
+                if(dataBuffer and packageIdx == idxReceived):
+                    payloadReceived += dataBuffer
+                    packageIdx += 1
+                else:
+                    print("IDX DOES NOT MATCH")
+                    print("SEND ERROR")
 
-        a = self.protocol.handlePackage(self.com, lenghtData, dataBuffer)
-        print(a)
+        with open('teste.png', 'wb') as image:
+            image.write(payloadReceived)
     
