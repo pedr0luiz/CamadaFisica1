@@ -11,7 +11,7 @@ class Protocol:
                         'EOPInPayload': struct.pack("I", 2),
                         'payloadLenght': struct.pack("I", 3),
                         'idxError': struct.pack("I", 4),
-                        'packageError': struct.pack("I", 5)
+                        'headError': struct.pack("I", 5)
                       }
         self.invertedErrors = {
                         struct.pack("I", 0): 'ok',
@@ -19,7 +19,7 @@ class Protocol:
                         struct.pack("I", 2): 'EOPInPayload',
                         struct.pack("I", 3): 'PayloadLenght',
                         struct.pack("I", 4): 'idxError',
-                        struct.pack("I", 5): 'packageError'  
+                        struct.pack("I", 5): 'headError'  
                       }
         self.payloadSize = 128
 

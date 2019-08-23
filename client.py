@@ -57,6 +57,6 @@ class Client:
                         self.protocol.response(self.com, lenghtData, 'idxError', head)
             else:
                 self.protocol.response(self.com, 0, 'headError', {"packageTotal": 0, "packageIdx": packageIdx})
-        with open('teste.txt', 'wb') as image:
+        with open('teste.png', 'wb') as image:
             image.write(payloadReceived)
     
