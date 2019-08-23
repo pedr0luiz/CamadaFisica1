@@ -104,7 +104,7 @@ class RX(object):
         while(self.getBufferLen() < size):
             time.sleep(0.001)
             actual = time.time()
-            if(actual - start >= 10):
+            if(actual - start >= 10000):
                 return self.getAllBuffer(0)
             
 
