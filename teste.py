@@ -14,7 +14,7 @@ nome = str(input("Client(C) ou Server(S)? "))
 if(nome == "C"):
   client = Client(name="/dev/cu.usbmodem14101")
   client.enable()
-  client.getImage()
+  client.getPackage()
   client.disable()
 else:
   Tk().withdraw()

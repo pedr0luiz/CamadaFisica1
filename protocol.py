@@ -46,7 +46,6 @@ class Protocol:
 
     def readHead(self, head):
         print("READ HEAD")
-        print(head)
         lenData = struct.unpack("I",head[-4:])[0]
         erro = head[:4]
         packageIdx = int.from_bytes(head[6 : 8], byteorder="little")
@@ -60,8 +59,10 @@ class Protocol:
             return True
         return False 
 
-    def response(self, com, lenRecieved, erro):
-        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro)
+    def response(self, com, lenRecieved, erro, head):
+        totalPackages = head["packageTotal"]
+        idxReceived = head["packageIdx"]
+        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro, idxReceived, totalPackages)
         com.sendData(buffer)
         while(com.tx.getIsBussy()):
             pass
@@ -75,33 +76,32 @@ class Protocol:
             return True
         return False
 
-    def handlePackage(self, com, lenghtData, dataBuffer):
+    def handlePackage(self, com, head, dataBuffer):
         lenDataRecieved = len(dataBuffer)
+        lenghtData = head["lenghtData"]
         if lenghtData == lenDataRecieved:
             if(self.isEOPInPayload(dataBuffer)):
                 #Enviar erro 
                 print("EOP NO PAYLOAD")
                 print('Sending ERROR')
-                self.response(com, lenDataRecieved, 'EOP IN PAYLOAD')
+                self.response(com, lenDataRecieved, 'EOP IN PAYLOAD', head)
                 return False
             else:
                 if(self.readEOP(com)):
                     print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
-                    self.response(com, lenDataRecieved, 'OK')
+                    self.response(com, lenDataRecieved, 'OK', head)
                     dataBuffer = self.unStuffPayload(dataBuffer)
-                    with open('newImage.png','wb') as image:
-                        image.write(dataBuffer)
-                    return True
+                    return dataBuffer
                 else:
                     print('EOP NOT FOUND')
                     print('Sending ERROR')
-                    self.response(com, lenDataRecieved, 'EOP NOT FOUND')
+                    self.response(com, lenDataRecieved, 'EOP NOT FOUND', head)
                     return False
                     #ERRROR
         else:
             print('ERROR PAYLOAD LENGHT')
             print('Sending ERROR')
-            self.response(com, lenDataRecieved, 'PAYLOAD LENGHT')
+            self.response(com, lenDataRecieved, 'PAYLOAD LENGHT', head)
             return False
             #ERRO
     
