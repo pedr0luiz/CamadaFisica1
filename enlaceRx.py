@@ -84,6 +84,7 @@ class RX(object):
         b = self.buffer[:]
         self.clearBuffer()
         self.threadResume()
+        print('\nALL BUFFER: {}\n'.format(b))
         return(b)
 
     def getBuffer(self, nData):
@@ -103,8 +104,8 @@ class RX(object):
         while(self.getBufferLen() < size):
             time.sleep(0.001)
             actual = time.time()
-            if(actual - start >= 30):
-                return self.getBuffer(self.getBufferLen())
+            if(actual - start >= 10):
+                return self.getAllBuffer(0)
             
 
         return(self.getBuffer(size))
