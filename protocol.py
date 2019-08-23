@@ -10,14 +10,16 @@ class Protocol:
                         'EOPNotFound': struct.pack("I", 1),
                         'EOPInPayload': struct.pack("I", 2),
                         'payloadLenght': struct.pack("I", 3),
-                        'idxError': struct.pack("I", 4)
+                        'idxError': struct.pack("I", 4),
+                        'packageError': struct.pack("I", 5)
                       }
         self.invertedErrors = {
                         struct.pack("I", 0): 'ok',
                         struct.pack("I", 1): 'EOPNotFound',
                         struct.pack("I", 2): 'EOPInPayload',
                         struct.pack("I", 3): 'PayloadLenght',
-                        struct.pack("I", 4): 'idxError' 
+                        struct.pack("I", 4): 'idxError',
+                        struct.pack("I", 5): 'packageError'  
                       }
         self.payloadSize = 128
 
@@ -49,11 +51,14 @@ class Protocol:
 
     def readHead(self, head):
         print("READ HEAD")
-        lenData = struct.unpack("I",head[-4:])[0]
-        erro = head[:4]
-        packageIdx = int.from_bytes(head[6 : 8], byteorder="little")
-        packageTotal = int.from_bytes(head[4 : 6], byteorder="little")
-        return { "error": self.invertedErrors[erro], "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
+        if len(head) == self.headSize:
+            lenData = struct.unpack("I",head[-4:])[0]
+            erro = head[:4]
+            packageIdx = int.from_bytes(head[6 : 8], byteorder="little")
+            packageTotal = int.from_bytes(head[4 : 6], byteorder="little")
+            return { "error": self.invertedErrors[erro], "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
+        else:
+            return False
 
     def isEOPInPayload(self, payload):
         if payload.count(self.EOP) > 0:
