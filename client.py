@@ -41,20 +41,20 @@ class Client:
         while totalPackages == None or packageIdx < totalPackages:
             headBuffer, lenHead = self.com.getData(self.protocol.headSize)
             head = self.protocol.readHead(headBuffer)
+            totalPackages = head["packageTotal"]
+            lenghtData = head["lenghtData"]
+            idxReceived = head["packageIdx"]
             print('HEAD LIDO: {}'.format(head))
             if head["error"] == 'OK':
-                totalPackages = head["packageTotal"]
-                lenghtData = head["lenghtData"]
-                idxReceived = head["packageIdx"]
                 dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
                 dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer)
                 if(dataBuffer and packageIdx == idxReceived):
                     payloadReceived += dataBuffer
                     packageIdx += 1
                 else:
-                    print("IDX DOES NOT MATCH")
-                    print("SEND ERROR")
+                    print('SENDING ERROR AND WAITING FOR PACKAGE: {}'.format(idxReceived))
+                    self.protocol.response(self.com, lenghtData, 'idxError', head)
 
-        with open('teste.png', 'wb') as image:
+        with open('teste.txt', 'wb') as image:
             image.write(payloadReceived)
     

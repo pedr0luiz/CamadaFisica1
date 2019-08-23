@@ -6,16 +6,18 @@ class Protocol:
         self.EOP = b'kjgpoiymf'
         self.stuffedEOP = b'1k2j3g4p5o6i7y8m9f0g'
         self.errors = {
-                        'OK': struct.pack("I", 0),
-                        'EOP NOT FOUND': struct.pack("I", 1),
-                        'EOP IN PAYLOAD': struct.pack("I", 2),
-                        'PAYLOAD LENGHT': struct.pack("I", 3)
+                        'ok': struct.pack("I", 0),
+                        'EOPNotFound': struct.pack("I", 1),
+                        'EOPInPayload': struct.pack("I", 2),
+                        'payloadLenght': struct.pack("I", 3),
+                        'idxError': struct.pack("I", 4)
                       }
         self.invertedErrors = {
-                        struct.pack("I", 0): 'OK',
-                        struct.pack("I", 1): 'EOP NOT FOUND',
-                        struct.pack("I", 2): 'EOP IN PAYLOAD',
-                        struct.pack("I", 3): 'PAYLOAD LENGHT' 
+                        struct.pack("I", 0): 'ok',
+                        struct.pack("I", 1): 'EOPNotFound',
+                        struct.pack("I", 2): 'EOPInPayload',
+                        struct.pack("I", 3): 'PayloadLenght',
+                        struct.pack("I", 4): 'idxError' 
                       }
         self.payloadSize = 128
 
@@ -26,9 +28,10 @@ class Protocol:
         index = idxPackage.to_bytes(2, byteorder="little")
         erro = self.errors[error]
         size = struct.pack("I", lenght)
+        print(erro)
         print(total)
         print(index)
-        print(lenght)
+        print(size)
         return  erro + total + index + size
 
     def createBuffer(self, payload, erro, idxPackage, numberOfPackages):
@@ -84,24 +87,24 @@ class Protocol:
                 #Enviar erro 
                 print("EOP NO PAYLOAD")
                 print('Sending ERROR')
-                self.response(com, lenDataRecieved, 'EOP IN PAYLOAD', head)
+                self.response(com, lenDataRecieved, 'EOPInPayload', head)
                 return False
             else:
                 if(self.readEOP(com)):
                     print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
-                    self.response(com, lenDataRecieved, 'OK', head)
+                    self.response(com, lenDataRecieved, 'ok', head)
                     dataBuffer = self.unStuffPayload(dataBuffer)
                     return dataBuffer
                 else:
                     print('EOP NOT FOUND')
                     print('Sending ERROR')
-                    self.response(com, lenDataRecieved, 'EOP NOT FOUND', head)
+                    self.response(com, lenDataRecieved, 'EOPNotFound', head)
                     return False
                     #ERRROR
         else:
             print('ERROR PAYLOAD LENGHT')
             print('Sending ERROR')
-            self.response(com, lenDataRecieved, 'PAYLOAD LENGHT', head)
+            self.response(com, lenDataRecieved, 'PayloadLenght', head)
             return False
             #ERRO
     

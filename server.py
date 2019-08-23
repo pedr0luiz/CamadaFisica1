@@ -51,9 +51,9 @@ class Server:
         with open (imageName, 'rb') as imageData:
             payload = bytearray(imageData.read())
 
-        buffer = self.protocol.createBuffer(payload, "OK", 0, 1)
+        buffer = self.protocol.createBuffer(payload, "ok", 0, 1)
 
-        print("-----------------------------------------------")
+        print("---------------------------------------------------")
         print("OVERHEAD: {:.4f} ".format((len(buffer)/len(payload))))
         print("------------------------------------------------ \n")
 
@@ -72,10 +72,10 @@ class Server:
 
         #print('END APARECE: {} VEZ(ES)'.format(buffer.count(b'end')))
 
-    def getResponse(self, size):
+    def getResponse(self):
         #------------------------------------------#
         print("########################################")
-        print("INIT RECIEVER")
+        print("GETTING RESPONSE")
         print("########################################")
         #------------------------------------------#
         #Get Head
@@ -91,17 +91,23 @@ class Server:
         print("IMAGE LEN: {}".format(head["lenghtData"]))
         #------------------------------------------#
         #Get Data
+        
         dataBuffer, lenDataRecieved = self.com.getData(head["lenghtData"])
         #------------------------------------------#
         print("--------------------------------------->")
         print("PAYLOAD LEN: {}".format(lenDataRecieved))
         #------------------------------------------#
-        print("-----------------------------------------------------------")
+        print("--------------------------------------->")
         print("RESPONSE STATUS: ")
         print(head["error"])
-        print("-----------------------------------------------------------")
+        print("--------------------------------------->")
 
-        return head["error"], lenDataRecieved
+        if(self.protocol.readEOP(self.com)):
+            return True, head, lenDataRecieved
+        else:
+            return False, head, lenDataRecieved
+
+        
         # if(self.protocol.isEOPInPayload(dataBuffer)):
         #     #Enviar erro 
         #     pass
@@ -115,37 +121,50 @@ class Server:
     
     def sendPackages(self, totalBuffer):
         packages = self.createPackages(totalBuffer)
+        idx = 0
         for pk in packages:
+            print("SENDING PACKAGE {}/{} \n".format(idx, len(packages)))
             self.com.sendData(pk)
             while(self.com.tx.getIsBussy()):
                 pass
-            error, lenRecieved = self.getResponse(self.protocol.payloadSize)
-            print("-------------------------------------")
-            print(error)
-            print("-------------------------------------")
-            if(error != "OK"):
-                print("################################## \n")
+            status, head, lenRecieved = self.getResponse()
+            print("\n ################################################### \n")
+            idx += 1
+            if(not status or head["error"] != 'ok'):
+                print(" \n ##################################")
                 print("Error in package")
-                print("################################### \n")
-                break;
+                print(" ################################### \n ")
+                self.handlePackageError(head, packages)
+                self.getResponse()
+                
 
     def createPackages(self, payload):
         numberOfPackages = math.ceil(len(payload)/self.protocol.payloadSize)
         packages = []
-        for i in range(0, numberOfPackages - 1):
+        for i in range(0, numberOfPackages):
             if((i+1) * self.protocol.payloadSize > len(payload)):
                 packagePayload = payload[i*self.protocol.payloadSize :]
                 print("LAST PACKAGE")
                 print("LEN PAYLOAD: {}".format(len(packagePayload)))
-                print("----------------->")
+                print("--------------------------------------->")
             else:
                 
                 packagePayload = payload[i*self.protocol.payloadSize : (i+1) * self.protocol.payloadSize]
-                print("LEN PAYLOAD: {}".format(len(packagePayload)))
-                print("----------------->")
-            package = self.protocol.createBuffer(packagePayload, "OK", i, numberOfPackages)
+                print(" \n LEN PAYLOAD: {}".format(len(packagePayload)))
+                print("--------------------------------------->")
+                
+            package = self.protocol.createBuffer(packagePayload, "ok" i, numberOfPackages)
             packages.append(package)
         return packages
+
+    def handlePackageError(self, head, packages):
+        idxError = head["packageIdx"]
+        package = packages[idxError]
+        self.com.sendData(package)
+        while(self.com.tx.getIsBussy()):
+            pass
+        print("PACKAGE {} RESENT".format(idxError))
+        print("-------------------------------------------->")
 
 
 
