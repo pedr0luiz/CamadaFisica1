@@ -2,7 +2,7 @@ import struct
 
 class Protocol:
     def __init__(self):
-        self.headSize = 8
+        self.headSize = 12
         self.EOP = b'kjgpoiymf'
         self.stuffedEOP = b'1k2j3g4p5o6i7y8m9f0g'
         self.errors = {
@@ -19,20 +19,23 @@ class Protocol:
                       }
         self.payloadSize = 128
 
-    def createHead(self, lenght, erro, idxPackage, numberOfPackages: int):
+    def createHead(self, lenght, error, idxPackage, numberOfPackages):
         print("CREATE HEAD")
         print(struct.pack("I", 0) + struct.pack("I", lenght))
         total = numberOfPackages.to_bytes(2, byteorder="little") 
         index = idxPackage.to_bytes(2, byteorder="little")
-        erro = self.errors[erro]
+        erro = self.errors[error]
         size = struct.pack("I", lenght)
-
-        return  self.errors[erro] + (total + index) + size
+        print(total)
+        print(index)
+        print(lenght)
+        return  erro + total + index + size
 
     def createBuffer(self, payload, erro, idxPackage, numberOfPackages):
         payload = self.stuffPayload(payload)
         head = self.createHead(len(payload), erro, idxPackage, numberOfPackages)
         buffer = head + payload  + self.EOP
+        print(buffer.count(self.EOP))
         return buffer
 
     def stuffPayload(self, payload):
@@ -46,9 +49,9 @@ class Protocol:
         print(head)
         lenData = struct.unpack("I",head[-4:])[0]
         erro = head[:4]
-        packageIdx = head[6 : 8].from_bytes(2, byteorder="little")
-        packageTotal = head[4 : 6].from_bytes(2, byteorder="little")
-        return { "error": erro, "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
+        packageIdx = int.from_bytes(head[6 : 8], byteorder="little")
+        packageTotal = int.from_bytes(head[4 : 6], byteorder="little")
+        return { "error": self.invertedErrors[erro], "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
 
     def isEOPInPayload(self, payload):
         if payload.count(self.EOP) > 0:

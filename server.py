@@ -98,10 +98,10 @@ class Server:
         #------------------------------------------#
         print("-----------------------------------------------------------")
         print("RESPONSE STATUS: ")
-        print(self.protocol.invertedErrors[head["error"]])
+        print(head["error"])
         print("-----------------------------------------------------------")
 
-        return self.protocol.invertedErrors[head["error"]], lenDataRecieved
+        return head["error"], lenDataRecieved
         # if(self.protocol.isEOPInPayload(dataBuffer)):
         #     #Enviar erro 
         #     pass
@@ -120,8 +120,13 @@ class Server:
             while(self.com.tx.getIsBussy()):
                 pass
             error, lenRecieved = self.getResponse(self.protocol.payloadSize)
+            print("-------------------------------------")
+            print(error)
+            print("-------------------------------------")
             if(error != "OK"):
+                print("################################## \n")
                 print("Error in package")
+                print("################################### \n")
                 break;
 
     def createPackages(self, payload):
@@ -130,8 +135,14 @@ class Server:
         for i in range(0, numberOfPackages - 1):
             if((i+1) * self.protocol.payloadSize > len(payload)):
                 packagePayload = payload[i*self.protocol.payloadSize :]
+                print("LAST PACKAGE")
+                print("LEN PAYLOAD: {}".format(len(packagePayload)))
+                print("----------------->")
             else:
+                
                 packagePayload = payload[i*self.protocol.payloadSize : (i+1) * self.protocol.payloadSize]
+                print("LEN PAYLOAD: {}".format(len(packagePayload)))
+                print("----------------->")
             package = self.protocol.createBuffer(packagePayload, "OK", i, numberOfPackages)
             packages.append(package)
         return packages
