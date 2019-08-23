@@ -153,7 +153,7 @@ class Server:
                 print(" \n LEN PAYLOAD: {}".format(len(packagePayload)))
                 print("--------------------------------------->")
                 
-            package = self.protocol.createBuffer(packagePayload, "ok" i, numberOfPackages)
+            package = self.protocol.createBuffer(packagePayload, "ok", i, numberOfPackages)
             packages.append(package)
         return packages
 
