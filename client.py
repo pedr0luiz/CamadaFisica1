@@ -45,7 +45,7 @@ class Client:
             lenghtData = head["lenghtData"]
             idxReceived = head["packageIdx"]
             print('HEAD LIDO: {}'.format(head))
-            if head["error"] == 'OK':
+            if head["error"] == 'ok':
                 dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
                 dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer)
                 if(dataBuffer and packageIdx == idxReceived):
