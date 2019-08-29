@@ -80,15 +80,10 @@ class Server:
         #------------------------------------------#
         #Get Head
         headBuffer, lenHead = self.com.getData(self.protocol.headSize)
-        #------------------------------------------#
-        print("--------------------------------------->")
-        print("HEAD: {}".format(headBuffer))
-        #------------------------------------------#
+        #------------------------------------------#-----#
         #Separate Len from Head
         head = self.protocol.readHead(headBuffer)
         #------------------------------------------#
-        print("--------------------------------------->")
-        print("IMAGE LEN: {}".format(head["lenghtData"]))
         #------------------------------------------#
         #Get Data
         
@@ -122,21 +117,23 @@ class Server:
     def sendPackages(self, totalBuffer):
         packages = self.createPackages(totalBuffer)
         idx = 0
-        for pk in packages:
+        while idx < len(packages):
             print("SENDING PACKAGE {}/{} \n".format(idx, len(packages)))
-            self.com.sendData(pk)
+            self.com.sendData(packages[idx])
             while(self.com.tx.getIsBussy()):
                 pass
             status, head, lenRecieved = self.getResponse()
-            print("\n ################################################### \n")
-            idx += 1
+            print("###################################################")
             if(not status or head["error"] != 'ok'):
-                print(" \n ##################################")
-                print("Error in package")
-                print(" ################################### \n ")
-                self.handlePackageError(head, packages)
-                self.getResponse()
-                
+                idx = head['packageIdx']
+                print('RESENDING PACKAGE: {}'.format(idx))
+                # print(" \n ##################################")
+                # print("Error in package")
+                # print(" ################################### \n ")
+                # self.handlePackageError(head, packages)
+                # self.getResponse()
+            else: 
+                idx += 1
 
     def createPackages(self, payload):
         numberOfPackages = math.ceil(len(payload)/self.protocol.payloadSize)
@@ -163,7 +160,7 @@ class Server:
         self.com.sendData(package)
         while(self.com.tx.getIsBussy()):
             pass
-        print("PACKAGE {} RESENT".format(idxError))
+        print("PACKAGE {} RESENT".format(idxError + 1))
         print("-------------------------------------------->")
 
 
