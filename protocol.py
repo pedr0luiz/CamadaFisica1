@@ -37,7 +37,6 @@ class Protocol:
         return  erro + total + index + size
 
     def createBuffer(self, payload, erro, idxPackage, numberOfPackages):
-        payload = self.stuffPayload(payload)
         head = self.createHead(len(payload), erro, idxPackage, numberOfPackages)
         buffer = head + payload  + self.EOP
         print(buffer.count(self.EOP))
@@ -98,7 +97,7 @@ class Protocol:
                 if(self.readEOP(com)):
                     print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
                     self.response(com, lenDataRecieved, 'ok', head)
-                    dataBuffer = self.unStuffPayload(dataBuffer)
+                    #dataBuffer = self.unStuffPayload(dataBuffer)
                     return dataBuffer
                 else:
                     print('EOP NOT FOUND')

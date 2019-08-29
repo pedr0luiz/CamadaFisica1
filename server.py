@@ -115,6 +115,7 @@ class Server:
         #         pass 
     
     def sendPackages(self, totalBuffer):
+        totalBuffer = self.protocol.stuffPayload(totalBuffer)
         packages = self.createPackages(totalBuffer)
         idx = 0
         while idx < len(packages):
