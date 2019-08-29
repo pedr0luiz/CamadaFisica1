@@ -51,7 +51,7 @@ class Server:
         with open (imageName, 'rb') as imageData:
             payload = bytearray(imageData.read())
 
-        buffer = self.protocol.createBuffer(payload, "ok", 0, 1)
+        buffer = self.protocol.createBuffer(payload, "ok", 0, 1, 'data' , self.protocol.clientId)
 
         print("---------------------------------------------------")
         print("OVERHEAD: {:.4f} ".format((len(buffer)/len(payload))))
@@ -145,13 +145,12 @@ class Server:
                 print("LAST PACKAGE")
                 print("LEN PAYLOAD: {}".format(len(packagePayload)))
                 print("--------------------------------------->")
-            else:
-                
+            else: 
                 packagePayload = payload[i*self.protocol.payloadSize : (i+1) * self.protocol.payloadSize]
                 print(" \n LEN PAYLOAD: {}".format(len(packagePayload)))
                 print("--------------------------------------->")
                 
-            package = self.protocol.createBuffer(packagePayload, "ok", i, numberOfPackages)
+            package = self.protocol.createBuffer(packagePayload, "ok", i, numberOfPackages, 'data', self.protocol.clientId)
             packages.append(package)
         return packages
 

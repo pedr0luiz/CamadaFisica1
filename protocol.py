@@ -3,8 +3,8 @@ import struct
 class Protocol:
     def __init__(self):
         self.headSize = 12
-        self.EOP = b'kjgpoiymf'
-        self.stuffedEOP = b'1k2j3g4p5o6i7y8m9f0g'
+        self.EOP = b'kjgpoiy'
+        self.stuffedEOP = b'1k2j3g4p5o6i7y8m'
         self.errors = {
                         'ok': struct.pack("I", 0),
                         'EOPNotFound': struct.pack("I", 1),
@@ -21,25 +21,38 @@ class Protocol:
                         struct.pack("I", 4): 'idxError',
                         struct.pack("I", 5): 'headError'  
                       }
+        self.types = {
+                        'connect': int(1).to_bytes(1, byteorder="little"),
+                        'connected': int(2).to_bytes(1, byteorder="little"),
+                        'data': int(3).to_bytes(1, byteorder="little"),
+                        'gotData': int(4).to_bytes(1, byteorder="little"),
+                        'timeOut': int(5).to_bytes(1, byteorder="little"),
+                        'dataError': int(6).to_bytes(1, byteorder="little")
+                      }
+        self.invertedTypes = {
+                        int(1).to_bytes(1, byteorder="little"): 'connect',
+                        int(2).to_bytes(1, byteorder="little"): 'connected',
+                        int(3).to_bytes(1, byteorder="little"): 'data',
+                        int(4).to_bytes(1, byteorder="little"): 'gotData',
+                        int(5).to_bytes(1, byteorder="little"): 'timeOut',
+                        int(6).to_bytes(1, byteorder="little"): 'dataError', 
+                      }
         self.payloadSize = 128
+        self.clientId = 1
+        self.serverId = 2
 
-    def createHead(self, lenght, error, idxPackage, numberOfPackages):
-        print("CREATE HEAD")
-        print(struct.pack("I", 0) + struct.pack("I", lenght))
+    def createHead(self, lenght, error, idxPackage, numberOfPackages, msgType, target):
         total = numberOfPackages.to_bytes(2, byteorder="little") 
         index = idxPackage.to_bytes(2, byteorder="little")
         erro = self.errors[error]
         size = struct.pack("I", lenght)
-        print(erro)
-        print(total)
-        print(index)
-        print(size)
-        return  erro + total + index + size
+        msgType = self.types[msgType]
+        target = target.to_bytes(1, byteorder="little")
+        return target + msgType + erro + total + index + size
 
-    def createBuffer(self, payload, erro, idxPackage, numberOfPackages):
-        head = self.createHead(len(payload), erro, idxPackage, numberOfPackages)
+    def createBuffer(self, payload, erro, idxPackage, numberOfPackages, msgType, target):
+        head = self.createHead(len(payload), erro, idxPackage, numberOfPackages, msgType, target)
         buffer = head + payload  + self.EOP
-        print(buffer.count(self.EOP))
         return buffer
 
     def stuffPayload(self, payload):
@@ -49,13 +62,21 @@ class Protocol:
         return payload.replace(self.stuffedEOP, self.EOP)
 
     def readHead(self, head):
-        print("READ HEAD")
         if len(head) == self.headSize:
             lenData = struct.unpack("I",head[-4:])[0]
-            erro = head[:4]
-            packageIdx = int.from_bytes(head[6 : 8], byteorder="little")
-            packageTotal = int.from_bytes(head[4 : 6], byteorder="little")
-            return { "error": self.invertedErrors[erro], "lenghtData": lenData, "packageIdx": packageIdx, "packageTotal": packageTotal }
+            erro = head[2:6]
+            #pylint: disable=E1102
+            msgType = self.invertedTypes(head[1])
+            target = self.invertedTypes(head[0])
+            packageIdx = int.from_bytes(head[8 : 10], byteorder="little")
+            packageTotal = int.from_bytes(head[6 : 8], byteorder="little")
+            return { "error": self.invertedErrors[erro], 
+                     "lenghtData": lenData, 
+                     "packageIdx": packageIdx, 
+                     "packageTotal": packageTotal,
+                     "msgType": msgType,
+                     "target": target
+                   }
         else:
             return False
 
@@ -66,10 +87,10 @@ class Protocol:
             return True
         return False 
 
-    def response(self, com, lenRecieved, erro, head):
+    def response(self, com, lenRecieved, erro, head, msgType, target):
         totalPackages = head["packageTotal"]
         idxReceived = head["packageIdx"]
-        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro, idxReceived, totalPackages)
+        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro, idxReceived, totalPackages, msgType, target)
         com.sendData(buffer)
         while(com.tx.getIsBussy()):
             pass
@@ -83,7 +104,7 @@ class Protocol:
             return True
         return False
 
-    def handlePackage(self, com, head, dataBuffer):
+    def handlePackage(self, com, head, dataBuffer, target):
         lenDataRecieved = len(dataBuffer)
         lenghtData = head["lenghtData"]
         if lenghtData == lenDataRecieved:
@@ -91,24 +112,24 @@ class Protocol:
                 #Enviar erro 
                 print("EOP NO PAYLOAD")
                 print('Sending ERROR')
-                self.response(com, lenDataRecieved, 'EOPInPayload', head)
+                self.response(com, lenDataRecieved, 'EOPInPayload', head, 'dataError', target)
                 return False
             else:
                 if(self.readEOP(com)):
                     print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
-                    self.response(com, lenDataRecieved, 'ok', head)
+                    self.response(com, lenDataRecieved, 'ok', head, 'gotData', target)
                     #dataBuffer = self.unStuffPayload(dataBuffer)
                     return dataBuffer
                 else:
                     print('EOP NOT FOUND')
                     print('Sending ERROR')
-                    self.response(com, lenDataRecieved, 'EOPNotFound', head)
+                    self.response(com, lenDataRecieved, 'EOPNotFound', head, 'dataError', target)
                     return False
                     #ERRROR
         else:
             print('ERROR PAYLOAD LENGHT')
             print('Sending ERROR')
-            self.response(com, lenDataRecieved, 'PayloadLenght', head)
+            self.response(com, lenDataRecieved, 'PayloadLenght', head, 'dataError', target)
             return False
             #ERRO
     

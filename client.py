@@ -48,16 +48,16 @@ class Client:
                 print('HEAD LIDO: {}'.format(head))
                 if head["error"] == 'ok':
                     dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
-                    dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer)
+                    dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer, self.protocol.serverId)
                     if(dataBuffer and packageIdx == idxReceived):
                         payloadReceived += dataBuffer
                         packageIdx += 1
                     else:
                         print('SENDING ERROR AND WAITING FOR PACKAGE: {}'.format(idxReceived))
-                        self.protocol.response(self.com, lenghtData, 'idxError', head)
+                        self.protocol.response(self.com, lenghtData, 'idxError', head, 'dataError' , self.protocol.serverId)
             else:
-                self.protocol.response(self.com, 0, 'headError', {"packageTotal": 0, "packageIdx": packageIdx})
+                self.protocol.response(self.com, 0, 'headError', {"packageTotal": 0, "packageIdx": packageIdx}, 'dataError' , self.protocol.serverId)
         payloadReceived = self.protocol.unStuffPayload(payloadReceived)
         with open('teste.png', 'wb') as image:
             image.write(payloadReceived)
-    
+  
