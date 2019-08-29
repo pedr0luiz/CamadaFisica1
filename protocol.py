@@ -65,9 +65,9 @@ class Protocol:
         if len(head) == self.headSize:
             lenData = struct.unpack("I",head[-4:])[0]
             erro = head[2:6]
-            #pylint: disable=E1102
-            msgType = self.invertedTypes(head[1])
-            target = self.invertedTypes(head[0])
+            print(head)
+            msgType = self.invertedTypes[head[1]]
+            target = self.invertedTypes[head[0]]
             packageIdx = int.from_bytes(head[8 : 10], byteorder="little")
             packageTotal = int.from_bytes(head[6 : 8], byteorder="little")
             return { "error": self.invertedErrors[erro], 
