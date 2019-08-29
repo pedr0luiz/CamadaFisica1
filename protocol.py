@@ -64,7 +64,6 @@ class Protocol:
     def readHead(self, head):
         if len(head) == self.headSize:
             lenData = struct.unpack("I",head[-4:])[0]
-            print(head, head[-4:])
             erro = head[2:6]
             msgType = self.invertedTypes[head[1:2]]
             target = int.from_bytes(head[0:1], byteorder="little")
