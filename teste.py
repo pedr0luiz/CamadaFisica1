@@ -23,5 +23,9 @@ else:
   server.enable()
   with open(filePath, 'rb') as image:
     imageBytes = image.read()
+  inicia = False
+  while(not inicia):
+    inicia = server.initConnection()
+  print("START SENDING PACKAGES")
   server.sendPackages(imageBytes)
   server.disable()

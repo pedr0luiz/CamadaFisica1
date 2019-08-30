@@ -154,14 +154,15 @@ class Server:
             packages.append(package)
         return packages
 
-    def handlePackageError(self, head, packages):
-        idxError = head["packageIdx"]
-        package = packages[idxError]
-        self.com.sendData(package)
+    def initConnection(self):
+        buffer = self.protocol.createBuffer(b'', 'ok', 1, 1, 'connect', self.protocol.serverId)
+        self.com.sendData(buffer)
         while(self.com.tx.getIsBussy()):
             pass
-        print("PACKAGE {} RESENT".format(idxError + 1))
-        print("-------------------------------------------->")
-
-
-
+        time.sleep(5)
+        status, head, lenData = self.getResponse();
+        if(status):
+            print(head)
+            if(head["target"] == self.protocol.clientId and head["msgType"] == 'connected'):
+                return True
+        return False
