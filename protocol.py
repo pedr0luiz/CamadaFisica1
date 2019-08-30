@@ -17,7 +17,7 @@ class Protocol:
                         struct.pack("I", 0): 'ok',
                         struct.pack("I", 1): 'EOPNotFound',
                         struct.pack("I", 2): 'EOPInPayload',
-                        struct.pack("I", 3): 'PayloadLenght',
+                        struct.pack("I", 3): 'payloadLenght',
                         struct.pack("I", 4): 'idxError',
                         struct.pack("I", 5): 'headError'  
                       }
@@ -103,7 +103,7 @@ class Protocol:
             return True
         return False
 
-    def handlePackage(self, com, head, dataBuffer, target):
+    def handlePackage(self, com, head, dataBuffer, target, connecting):
         lenDataRecieved = len(dataBuffer)
         lenghtData = head["lenghtData"]
         if lenghtData == lenDataRecieved:
@@ -116,7 +116,8 @@ class Protocol:
             else:
                 if(self.readEOP(com)):
                     print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
-                    self.response(com, lenDataRecieved, 'ok', head, 'gotData', target)
+                    if not connecting:
+                        self.response(com, lenDataRecieved, 'ok', head, 'gotData', target)
                     #dataBuffer = self.unStuffPayload(dataBuffer)
                     return dataBuffer
                 else:
