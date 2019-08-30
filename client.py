@@ -45,10 +45,10 @@ class Client:
                 totalPackages = head["packageTotal"]
                 lenghtData = head["lenghtData"]
                 idxReceived = head["packageIdx"]
-                print('HEAD LIDO: {}'.format(head))
+                print('HEAD LIDO: {}'.format(head)) 
                 if head["error"] == 'ok':
                     dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
-                    dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer, self.protocol.serverId)
+                    dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer, self.protocol.serverId, False)
                     if(dataBuffer and packageIdx == idxReceived):
                         payloadReceived += dataBuffer
                         packageIdx += 1
@@ -60,4 +60,20 @@ class Client:
         payloadReceived = self.protocol.unStuffPayload(payloadReceived)
         with open('teste.png', 'wb') as image:
             image.write(payloadReceived)
+    
+    def initConnection(self):
+        packageIdx = 1
+        headBuffer, lenHead = self.com.getData(self.protocol.headSize)
+        head = self.protocol.readHead(headBuffer)
+        if head:
+            totalPackages = head["packageTotal"]
+            lenghtData = head["lenghtData"]
+            idxReceived = head["packageIdx"]
+            if head['error'] == 'ok':
+                dataBuffer, lenDataRecieved = self.com.getData(lenghtData)
+                dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer, self.protocol.serverId, True)
+            if((dataBuffer or dataBuffer == b'') and packageIdx == idxReceived and head['target'] == self.protocol.serverId and head['msgType'] == 'connect'):
+                self.protocol.response(self.com, head['lenghtData'], 'ok', {'packageTotal': 1, 'packageIdx': 1}, 'connected', self.protocol.clientId)
+                return False
+        return True
   

@@ -14,6 +14,11 @@ nome = str(input("Client(C) ou Server(S)? "))
 if(nome == "C"):
   client = Client(name="/dev/cu.usbmodem14101")
   client.enable()
+  ocioso = True
+  while ocioso:
+    print(ocioso)
+    ocioso = client.initConnection()
+    time.sleep(1)
   client.getPackage()
   client.disable()
 else:
