@@ -96,7 +96,7 @@ class RX(object):
         self.threadResume()
         return(b)
 
-    def getNData(self, size):
+    def getNData(self, size, sleepTime):
         """ Read N bytes of data from the reception buffer
         This function blocks until the number of bytes is received
         """
@@ -104,7 +104,7 @@ class RX(object):
         while(self.getBufferLen() < size):
             time.sleep(0.001)
             actual = time.time()
-            if(actual - start >= 1000):
+            if(actual - start >= sleepTime):
                 return self.getAllBuffer(0)
             
 

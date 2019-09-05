@@ -3,15 +3,17 @@ import struct
 class Protocol:
     def __init__(self):
         self.headSize = 14
-        self.EOP = b'kjgpoiy'
-        self.stuffedEOP = b'1k2j3g4p5o6i7y8m'
+        self.EOP = b'kjgpoi'
+        self.stuffedEOP = b'iopgjk'
         self.errors = {
                         'ok': struct.pack("I", 0),
                         'EOPNotFound': struct.pack("I", 1),
                         'EOPInPayload': struct.pack("I", 2),
                         'payloadLenght': struct.pack("I", 3),
                         'idxError': struct.pack("I", 4),
-                        'headError': struct.pack("I", 5)
+                        'headError': struct.pack("I", 5),
+                        'typeError': struct.pack("I", 6),
+                        'timeOut': struct.pack("I", 7)
                       }
         self.invertedErrors = {
                         struct.pack("I", 0): 'ok',
@@ -19,7 +21,9 @@ class Protocol:
                         struct.pack("I", 2): 'EOPInPayload',
                         struct.pack("I", 3): 'payloadLenght',
                         struct.pack("I", 4): 'idxError',
-                        struct.pack("I", 5): 'headError'  
+                        struct.pack("I", 5): 'headError',
+                        struct.pack("I", 6): 'typeError',
+                        struct.pack("I", 7): 'timeOut'
                       }
         self.types = {
                         'connect': int(1).to_bytes(1, byteorder="little"),
@@ -27,7 +31,8 @@ class Protocol:
                         'data': int(3).to_bytes(1, byteorder="little"),
                         'gotData': int(4).to_bytes(1, byteorder="little"),
                         'timeOut': int(5).to_bytes(1, byteorder="little"),
-                        'dataError': int(6).to_bytes(1, byteorder="little")
+                        'dataError': int(6).to_bytes(1, byteorder="little"),
+                        'timeOut': int(7).to_bytes(1, byteorder="little")
                       }
         self.invertedTypes = {
                         int(1).to_bytes(1, byteorder="little"): 'connect',
@@ -36,6 +41,7 @@ class Protocol:
                         int(4).to_bytes(1, byteorder="little"): 'gotData',
                         int(5).to_bytes(1, byteorder="little"): 'timeOut',
                         int(6).to_bytes(1, byteorder="little"): 'dataError', 
+                        int(7).to_bytes(1, byteorder="little"): 'timeOut', 
                       }
         self.payloadSize = 128
         self.clientId = 1
@@ -84,7 +90,7 @@ class Protocol:
             print('{} EOP IN PAYLOAD'.format(payload.count(self.EOP)))
             print('EOP IN BYTE: {}'.format(payload.index(self.EOP) + self.headSize))
             return True
-        return False 
+        return False  
 
     def response(self, com, lenRecieved, erro, head, msgType, target):
         totalPackages = head["packageTotal"]
@@ -97,7 +103,7 @@ class Protocol:
     def readEOP(self, com):
         EOPBuffer = b''
         while self.EOP not in EOPBuffer and len(EOPBuffer) < len(self.EOP):
-            dataEOP, lenEOP = com.getData(1)
+            dataEOP, lenEOP = com.getData(1, 10)
             EOPBuffer += dataEOP
         if EOPBuffer == self.EOP:
             return True

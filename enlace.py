@@ -50,11 +50,11 @@ class enlace(object):
         """
         self.tx.sendBuffer(data)
 
-    def getData(self, size):
+    def getData(self, size, sleepTime):
         """ Get n data over the enlace interface
         Return the byte array and the size of the buffer
         """
         print('entrou na leitura e tentara ler ' + str(size) )
-        data = self.rx.getNData(size)
+        data = self.rx.getNData(size, sleepTime)
        
         return(data, len(data))
