@@ -66,14 +66,13 @@ class Client:
                     if(actual - timer1 >= 20):
                         self.protocol.response(self.com, 0, 'timeOut', {"packageTotal": totalPackages, "packageIdx": packageIdx}, 'timeOut' , self.protocol.serverId)
                         self.ocioso = True
-                        self.disable()
                         break
             else:
                 actual = time.time()
                 if(actual - timer2 >= 20):
                     self.protocol.response(self.com, 0, 'timeOut', {"packageTotal": totalPackages, "packageIdx": packageIdx}, 'timeOut' , self.protocol.serverId)
                     self.ocioso = True
-                    self.disable()  
+                    break  
                 print('SENDING ERROR AND WAITING')
                 self.protocol.response(self.com, 0, 'headError', {"packageTotal": 0, "packageIdx": packageIdx}, 'dataError' , self.protocol.serverId)
         payloadReceived = self.protocol.unStuffPayload(payloadReceived)

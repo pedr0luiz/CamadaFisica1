@@ -31,8 +31,7 @@ class Protocol:
                         'data': int(3).to_bytes(1, byteorder="little"),
                         'gotData': int(4).to_bytes(1, byteorder="little"),
                         'timeOut': int(5).to_bytes(1, byteorder="little"),
-                        'dataError': int(6).to_bytes(1, byteorder="little"),
-                        'timeOut': int(7).to_bytes(1, byteorder="little")
+                        'dataError': int(6).to_bytes(1, byteorder="little")
                       }
         self.invertedTypes = {
                         int(1).to_bytes(1, byteorder="little"): 'connect',
@@ -40,8 +39,7 @@ class Protocol:
                         int(3).to_bytes(1, byteorder="little"): 'data',
                         int(4).to_bytes(1, byteorder="little"): 'gotData',
                         int(5).to_bytes(1, byteorder="little"): 'timeOut',
-                        int(6).to_bytes(1, byteorder="little"): 'dataError', 
-                        int(7).to_bytes(1, byteorder="little"): 'timeOut', 
+                        int(6).to_bytes(1, byteorder="little"): 'dataError' 
                       }
         self.payloadSize = 128
         self.clientId = 1
