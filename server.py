@@ -40,7 +40,7 @@ class Server:
     def readEOP(self):
         EOPBuffer = b''
         while self.protocol.EOP not in EOPBuffer or len(EOPBuffer) < len(self.protocol.EOP):
-            dataEOP, lenEOP = self.com.getData(1)
+            dataEOP, lenEOP = self.com.getData(1, 10)
             EOPBuffer += dataEOP
         if EOPBuffer == self.protocol.EOP:
             return True
@@ -79,28 +79,36 @@ class Server:
         print("########################################")
         #------------------------------------------#
         #Get Head
-        headBuffer, lenHead = self.com.getData(self.protocol.headSize)
+        headBuffer, lenHead = self.com.getData(self.protocol.headSize, 10)
+        print('pegou head')
+        print(headBuffer)
         #------------------------------------------#-----#
         #Separate Len from Head
         head = self.protocol.readHead(headBuffer)
+        print('leu head')
+        print(head)
         #------------------------------------------#
         #------------------------------------------#
         #Get Data
-        
-        dataBuffer, lenDataRecieved = self.com.getData(head["lenghtData"])
-        #------------------------------------------#
-        print("--------------------------------------->")
-        print("PAYLOAD LEN: {}".format(lenDataRecieved))
-        #------------------------------------------#
-        print("--------------------------------------->")
-        print("RESPONSE STATUS: ")
-        print(head["error"])
-        print("--------------------------------------->")
-
-        if(self.protocol.readEOP(self.com)):
-            return True, head, lenDataRecieved
+        if head:
+            dataBuffer, lenDataRecieved = self.com.getData(head["lenghtData"], 10)
+            #------------------------------------------#
+            print("--------------------------------------->")
+            print("PAYLOAD LEN: {}".format(lenDataRecieved))
+            #------------------------------------------#
+            print("--------------------------------------->")
+            print("RESPONSE STATUS: ")
+            print(head["error"])
+            print("------------ --------------------------->")
+            if(self.protocol.readEOP(self.com)):
+                return True, head, lenDataRecieved
+            else:
+                return False, head, lenDataRecieved
         else:
-            return False, head, lenDataRecieved
+            print("ELSE IF HEAD RESPOONSE")
+            return False, False, 0
+
+        
 
         
         # if(self.protocol.isEOPInPayload(dataBuffer)):
@@ -123,18 +131,44 @@ class Server:
             self.com.sendData(packages[idx])
             while(self.com.tx.getIsBussy()):
                 pass
+            timer1 = time.time()
+            timer2 = time.time()
             status, head, lenRecieved = self.getResponse()
+            print(status, head, lenRecieved)
             print("###################################################")
-            if(not status or head["error"] != 'ok'):
-                idx = head['packageIdx']
-                print('RESENDING PACKAGE: {}'.format(idx))
-                # print(" \n ##################################")
-                # print("Error in package")
-                # print(" ################################### \n ")
-                # self.handlePackageError(head, packages)
-                # self.getResponse()
-            else: 
-                idx += 1
+            if(head):
+                print("ENTROU HEAD")
+                if(not status or head["error"] != 'ok' or head["msgType"] == 'dataError'):
+                    idx = head['packageIdx']
+                    print('RESENDING PACKAGE: {}'.format(idx))
+                   
+                else:
+                    if(head['msgType'] == 'gotData'):
+                        idx += 1
+                    else:
+                        if(timer1 - time.time() > 5):
+                            self.com.sendData(packages[idx])
+                            while(self.com.tx.getIsBussy()):
+                                pass
+                            timer1 = time.time()
+                        if(timer2 - time.time() > 20):
+                            packageType5 = self.protocol.createBuffer(b'', 'timeOut', 0, 1, 'timeOut', self.protocol.clientId)
+                            self.com.sendData(packageType5)
+                            while(self.com.tx.getIsBussy()):
+                                pass
+                            break;
+                        else:
+                            status, head, lenRecieved = self.getResponse()
+                            if(head['error'] == 'ok'  and head['msgType'] == 'dataError'):
+                                idx = head['packageIdx']
+                            
+                                
+                                
+                        
+
+
+
+                        
 
     def createPackages(self, payload):
         numberOfPackages = math.ceil(len(payload)/self.protocol.payloadSize)
