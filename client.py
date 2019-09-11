@@ -42,7 +42,7 @@ class Client:
         timer1 = time.time()
         timer2 = time.time()
         while totalPackages == None or packageIdx < totalPackages:
-            headBuffer, lenHead = self.com.getData(self.protocol.headSize, 10)
+            headBuffer, lenHead = self.com.getData(self.protocol.headSize, 2)
             head = self.protocol.readHead(headBuffer)
             if head:
                 totalPackages = head["packageTotal"]
@@ -52,7 +52,7 @@ class Client:
                 if head["error"] == 'ok' and head['msgType'] == 'data':
                     timer1 = time.time()
                     timer2 = time.time()
-                    dataBuffer, lenDataRecieved = self.com.getData(lenghtData, 10)
+                    dataBuffer, lenDataRecieved = self.com.getData(lenghtData, 2)
                     dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer, self.protocol.serverId, False)
                     if(dataBuffer and packageIdx == idxReceived):
                         payloadReceived += dataBuffer
@@ -73,7 +73,7 @@ class Client:
                     self.protocol.response(self.com, 0, 'timeOut', {"packageTotal": totalPackages, "packageIdx": packageIdx}, 'timeOut' , self.protocol.serverId)
                     self.ocioso = True
                     break  
-                print('SENDING ERROR AND WAITING')
+                print('SENDING ERROR AND WAITING FOR PACKAGE: {}'.format(packageIdx))
                 self.protocol.response(self.com, 0, 'headError', {"packageTotal": 0, "packageIdx": packageIdx}, 'dataError' , self.protocol.serverId)
         payloadReceived = self.protocol.unStuffPayload(payloadReceived)
         with open('teste.png', 'wb') as image:
@@ -81,14 +81,14 @@ class Client:
     
     def initConnection(self):
         packageIdx = 1
-        headBuffer, lenHead = self.com.getData(self.protocol.headSize, 10)
+        headBuffer, lenHead = self.com.getData(self.protocol.headSize, 2)
         head = self.protocol.readHead(headBuffer)
         if head:
             totalPackages = head["packageTotal"]
             lenghtData = head["lenghtData"]
             idxReceived = head["packageIdx"]
             if head['error'] == 'ok':
-                dataBuffer, lenDataRecieved = self.com.getData(lenghtData, 10)
+                dataBuffer, lenDataRecieved = self.com.getData(lenghtData, 2)
                 dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer, self.protocol.serverId, True)
             if((dataBuffer or dataBuffer == b'') and packageIdx == idxReceived and head['target'] == self.protocol.serverId and head['msgType'] == 'connect'):
                 self.protocol.response(self.com, head['lenghtData'], 'ok', {'packageTotal': 1, 'packageIdx': 1}, 'connected', self.protocol.clientId)

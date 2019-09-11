@@ -75,12 +75,12 @@ class Protocol:
                 packageIdx = int.from_bytes(head[8 : 10], byteorder="little")
                 packageTotal = int.from_bytes(head[6 : 8], byteorder="little")
                 return { "error": self.invertedErrors[erro], 
-                            "lenghtData": lenData, 
-                          "packageIdx": packageIdx, 
-                            "packageTotal": packageTotal,
-                            "msgType": msgType,
-                            "target": target
-                        }
+                        "lenghtData": lenData, 
+                        "packageIdx": packageIdx, 
+                        "packageTotal": packageTotal,
+                        "msgType": msgType,
+                        "target": target
+                    }
             except:
                 return False
         else:
