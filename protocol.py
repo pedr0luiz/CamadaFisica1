@@ -69,17 +69,20 @@ class Protocol:
         if len(head) == self.headSize:
             lenData = struct.unpack("I",head[-4:])[0]
             erro = head[2:6]
-            msgType = self.invertedTypes[head[1:2]]
-            target = int.from_bytes(head[0:1], byteorder="little")
-            packageIdx = int.from_bytes(head[8 : 10], byteorder="little")
-            packageTotal = int.from_bytes(head[6 : 8], byteorder="little")
-            return { "error": self.invertedErrors[erro], 
-                     "lenghtData": lenData, 
-                     "packageIdx": packageIdx, 
-                     "packageTotal": packageTotal,
-                     "msgType": msgType,
-                     "target": target
-                   }
+            try:
+                msgType = self.invertedTypes[head[1:2]]
+                target = int.from_bytes(head[0:1], byteorder="little")
+                packageIdx = int.from_bytes(head[8 : 10], byteorder="little")
+                packageTotal = int.from_bytes(head[6 : 8], byteorder="little")
+                return { "error": self.invertedErrors[erro], 
+                        "lenghtData": lenData, 
+                        "packageIdx": packageIdx, 
+                        "packageTotal": packageTotal,
+                        "msgType": msgType,
+                        "target": target
+                    }
+            except:
+                return False
         else:
             return False
 
