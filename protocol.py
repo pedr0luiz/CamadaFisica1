@@ -1,4 +1,5 @@
 import struct 
+import datetime
 
 class Protocol:
     def __init__(self):
@@ -92,12 +93,23 @@ class Protocol:
             print('EOP IN BYTE: {}'.format(payload.index(self.EOP) + self.headSize))
             return True
         return False  
+    
+    def log(self, head, action):
+        with open('Server_Log.txt', 'a') as serverLog:
+            agora = datetime.datetime.now().time()
+            if action == 'sending':
+                text = "<{}> - Enviada: {} - Destinatario: {}\n".format(head['msgType'], agora, self.clientId)#head['target'])
+            else:
+                text = "<{}> - Recebida: {} - Remetente: {}\n".format(head['msgType'], agora, self.clientId)#head['target'])
+            serverLog.write(text)
 
     def response(self, com, lenRecieved, erro, head, msgType, target):
         totalPackages = head["packageTotal"]
         idxReceived = head["packageIdx"]
         buffer = self.createBuffer(struct.pack("I", lenRecieved), erro, idxReceived, totalPackages, msgType, target)
         com.sendData(buffer)
+        self.log({'msgType': msgType, 'target': target}, 'sending')
+
         while(com.tx.getIsBussy()):
             pass
 
@@ -110,7 +122,7 @@ class Protocol:
             return True
         return False
 
-    def handlePackage(self, com, head, dataBuffer, target, connecting):
+    def handlePackage(self, com, head, dataBuffer, target, connecting, actualIdx):
         lenDataRecieved = len(dataBuffer)
         lenghtData = head["lenghtData"]
         if lenghtData == lenDataRecieved:
@@ -120,23 +132,32 @@ class Protocol:
                 print('Sending ERROR')
                 self.response(com, lenDataRecieved, 'EOPInPayload', head, 'dataError', target)
                 return False
-            else:
+            else: 
                 if(self.readEOP(com)):
                     print('FOUND EOP at byte {}'.format(self.headSize + lenDataRecieved))
                     if not connecting:
-                        self.response(com, lenDataRecieved, 'ok', head, 'gotData', target)
-                    #dataBuffer = self.unStuffPayload(dataBuffer)
+                        packageIdx = head["packageIdx"]
+                        if actualIdx == packageIdx:
+                            print("SENDING RESPONSE PACKAGE: {}".format(head["packageIdx"]))
+                            print('----------------------------------------------------------\n')
+                            self.response(com, lenDataRecieved, 'ok', head, 'gotData', target)
+                        else:
+                            print('SENDING ERROR AND WAITING FOR PACKAGE: {} \n'.format(actualIdx))
+                            self.response(com, lenghtData, 'idxError', {'packageTotal':head["packageTotal"], 'packageIdx': actualIdx}, 'dataError' , self.serverId)
+                            return False
                     return dataBuffer
                 else:
                     print('EOP NOT FOUND')
                     print('Sending ERROR')
+                    print('----------------------------------------------------------\n')
                     self.response(com, lenDataRecieved, 'EOPNotFound', head, 'dataError', target)
                     return False
                     #ERRROR
         else:
             print('ERROR PAYLOAD LENGHT')
             print('Sending ERROR')
-            self.response(com, lenDataRecieved, 'PayloadLenght', head, 'dataError', target)
+            print('----------------------------------------------------------\n')
+            self.response(com, lenDataRecieved, 'payloadLenght', head, 'dataError', target)
             return False
             #ERRO
     
