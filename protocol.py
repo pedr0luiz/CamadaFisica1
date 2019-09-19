@@ -3,9 +3,9 @@ import datetime
 
 class Protocol:
     def __init__(self):
-        self.headSize = 14
-        self.EOP = b'kjgpoi'
-        self.stuffedEOP = b'iopgjk'
+        self.headSize = 16
+        self.EOP = b'kjgp'
+        self.stuffedEOP = b'iopg'
         self.errors = {
                         'ok': struct.pack("I", 0),
                         'EOPNotFound': struct.pack("I", 1),
@@ -46,17 +46,18 @@ class Protocol:
         self.clientId = 1
         self.serverId = 2
 
-    def createHead(self, lenght, error, idxPackage, numberOfPackages, msgType, target):
+    def createHead(self, lenght, error, idxPackage, numberOfPackages, msgType, target, crc):
+        crc = crc.to_bytes(2, byteorder="little")
         total = numberOfPackages.to_bytes(2, byteorder="little") 
         index = idxPackage.to_bytes(2, byteorder="little")
         erro = self.errors[error]
         size = struct.pack("I", lenght)
         msgType = self.types[msgType]
         target = target.to_bytes(1, byteorder="little")
-        return target + msgType + erro + total + index + size
+        return target + msgType + erro + total + index + size + crc
 
-    def createBuffer(self, payload, erro, idxPackage, numberOfPackages, msgType, target):
-        head = self.createHead(len(payload), erro, idxPackage, numberOfPackages, msgType, target)
+    def createBuffer(self, payload, erro, idxPackage, numberOfPackages, msgType, target, crc):
+        head = self.createHead(len(payload), erro, idxPackage, numberOfPackages, msgType, target, crc)
         buffer = head + payload  + self.EOP
         return buffer
 
@@ -68,19 +69,21 @@ class Protocol:
 
     def readHead(self, head):
         if len(head) == self.headSize:
-            lenData = struct.unpack("I",head[-4:])[0]
+            lenData = struct.unpack("I",head[10:14])[0]
             erro = head[2:6]
             try:
                 msgType = self.invertedTypes[head[1:2]]
                 target = int.from_bytes(head[0:1], byteorder="little")
                 packageIdx = int.from_bytes(head[8 : 10], byteorder="little")
                 packageTotal = int.from_bytes(head[6 : 8], byteorder="little")
+                crc = int.from_bytes(head[14:16], byteorder="little")
                 return { "error": self.invertedErrors[erro], 
                         "lenghtData": lenData, 
                         "packageIdx": packageIdx, 
                         "packageTotal": packageTotal,
                         "msgType": msgType,
-                        "target": target
+                        "target": target,
+                        "crc": crc
                     }
             except:
                 return False
@@ -106,7 +109,7 @@ class Protocol:
     def response(self, com, lenRecieved, erro, head, msgType, target):
         totalPackages = head["packageTotal"]
         idxReceived = head["packageIdx"]
-        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro, idxReceived, totalPackages, msgType, target)
+        buffer = self.createBuffer(struct.pack("I", lenRecieved), erro, idxReceived, totalPackages, msgType, target, 0)
         com.sendData(buffer)
         self.log({'msgType': msgType, 'target': target}, 'sending')
 

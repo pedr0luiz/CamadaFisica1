@@ -1,6 +1,7 @@
 from enlace import *
 from protocol import *
 import time
+import crc16
 import struct
 
 class Client:
@@ -8,6 +9,7 @@ class Client:
         self.com = enlace("/dev/ttyACM1")
         self.protocol = Protocol()
         self.ocioso = True
+        self.crc = 0
 
     #Enable Com
     def enable(self):
@@ -58,8 +60,9 @@ class Client:
                     dataBuffer, lenDataRecieved = self.com.getData(lenghtData, 2)
                     dataBuffer = self.protocol.handlePackage(self.com, head, dataBuffer, self.protocol.serverId, False, packageIdx)
                     if(dataBuffer):
+                        self.crc = head["crc"]
                         payloadReceived += dataBuffer
-                        packageIdx += 1
+                        packageIdx +=1
                     # else:
                     #     print('SENDING ERROR AND WAITING FOR PACKAGE: {} \n'.format(idxReceived))
                     #     self.protocol.response(self.com, lenghtData, 'idxError', {'packageTotal':head["packageTotal"], 'packageIdx': packageIdx}, 'dataError' , self.protocol.serverId)
@@ -80,11 +83,15 @@ class Client:
                     break  
                 #print('SENDING ERROR AND WAITING FOR PACKAGE: {}'.format(packageIdx))
                 #self.protocol.response(self.com, 0, 'headError', {"packageTotal": 0, "packageIdx": packageIdx}, 'dataError' , self.protocol.serverId)
-        payloadReceived = self.protocol.unStuffPayload(payloadReceived)
-        with open('teste.png', 'wb') as image:
-            image.write(payloadReceived)
+        if self.crc == crc16.crc16xmodem(payloadReceived):
+            print("CRC True")
+            payloadReceived = self.protocol.unStuffPayload(payloadReceived)
+            with open('teste.png', 'wb') as image:
+                image.write(payloadReceived)
+        else:
+            print("CRC False")
     
-    def initConnection(self):
+    def initConnection(self): 
         packageIdx = 1
         headBuffer, lenHead = self.com.getData(self.protocol.headSize, 2)
         head = self.protocol.readHead(headBuffer)

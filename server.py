@@ -13,6 +13,7 @@ from protocol import *
 import time
 import math
 import datetime
+import crc16
 
 # Serial Com Port
 #   para saber a sua porta, execute no terminal :
@@ -23,6 +24,7 @@ class Server:
         self.serialName = "/dev/ttyACM0"
         self.com = enlace(self.serialName)
         self.protocol = Protocol()
+        self.crc = 0
 
     def enable(self):
         print("-------------------------")
@@ -47,27 +49,27 @@ class Server:
             return True
         return False
 
-    def sendImage(self, imageName):
+    # def sendImage(self, imageName):
 
-        with open (imageName, 'rb') as imageData:
-            payload = bytearray(imageData.read())
+    #     with open (imageName, 'rb') as imageData:
+    #         payload = bytearray(imageData.read())
 
-        buffer = self.protocol.createBuffer(payload, "ok", 0, 1, 'data' , self.protocol.clientId)
+    #     buffer = self.protocol.createBuffer(payload, "ok", 0, 1, 'data' , self.protocol.clientId)
 
-        print("---------------------------------------------------")
-        print("OVERHEAD: {:.4f} ".format((len(buffer)/len(payload))))
-        print("------------------------------------------------ \n")
+    #     print("---------------------------------------------------")
+    #     print("OVERHEAD: {:.4f} ".format((len(buffer)/len(payload))))
+    #     print("------------------------------------------------ \n")
 
-        self.com.sendData(buffer)
-        start = time.time()
-        while(self.com.tx.getIsBussy()):
-            pass
-        end = time.time()
+    #     self.com.sendData(buffer)
+    #     start = time.time()
+    #     while(self.com.tx.getIsBussy()):
+    #         pass
+    #     end = time.time()
 
-        bitRate = round(len(payload)/(end - start), 2)
-        print("Transmitido {} bytes ".format(len(payload)))
-        print('Taxa de transmição: {} bytes/segundo'.format(bitRate))
-        return len(payload), bitRate
+    #     bitRate = round(len(payload)/(end - start), 2)
+    #     print("Transmitido {} bytes ".format(len(payload)))
+    #     print('Taxa de transmição: {} bytes/segundo'.format(bitRate))
+    #     return len(payload), bitRate
 
     def getResponse(self):
         print("GETTING RESPONSE")
@@ -111,7 +113,7 @@ class Server:
                         idx += 1
                     else:
                         if(time.time() - timer2 > 20):
-                            packageType5 = self.protocol.createBuffer(b'', 'timeOut', 0, 1, 'timeOut', self.protocol.clientId)
+                            packageType5 = self.protocol.createBuffer(b'', 'timeOut', 0, 1, 'timeOut', self.protocol.clientId, self.crc)
                             self.com.sendData(packageType5)
                             self.log({"msgType": "timeOut", "target": self.protocol.serverId}, "sending")
                             while(self.com.tx.getIsBussy()):
@@ -127,7 +129,7 @@ class Server:
             else:
                 if(time.time() - timer2 > 20):
                     print("TimeOut Timer 2 (20sec)")
-                    packageType5 = self.protocol.createBuffer(b'', 'timeOut', 0, 1, 'timeOut', self.protocol.clientId)
+                    packageType5 = self.protocol.createBuffer(b'', 'timeOut', 0, 1, 'timeOut', self.protocol.clientId, self.crc)
                     self.com.sendData(packageType5)
                     self.log({"msgType": "timeOut", "target": self.protocol.serverId}, "sending")
                     while(self.com.tx.getIsBussy()):
@@ -136,6 +138,8 @@ class Server:
                             
     def createPackages(self, payload):
         numberOfPackages = math.ceil(len(payload)/self.protocol.payloadSize)
+        self.crc = crc16.crc16xmodem(payload)
+        print('CRC: {}'.format(self.crc))
         packages = []
         for i in range(0, numberOfPackages):
             if((i+1) * self.protocol.payloadSize > len(payload)):
@@ -143,15 +147,15 @@ class Server:
             else: 
                 packagePayload = payload[i*self.protocol.payloadSize : (i+1) * self.protocol.payloadSize]
                 
-            package = self.protocol.createBuffer(packagePayload, "ok", i, numberOfPackages, 'data', self.protocol.clientId)
+            package = self.protocol.createBuffer(packagePayload, "ok", i, numberOfPackages, 'data', self.protocol.clientId, self.crc)
             packages.append(package)
         return packages
 
     def initConnection(self):
-        buffer = self.protocol.createBuffer(b'', 'ok', 1, 1, 'connect', self.protocol.serverId)
+        buffer = self.protocol.createBuffer(b'', 'ok', 1, 1, 'connect', self.protocol.serverId, self.crc)
         self.com.sendData(buffer)
         self.log({"msgType": "connect", "target": self.protocol.serverId}, "sending")
-        while(self.com.tx.getIsBussy()):
+        while(self.com.tx.getIsBussy()): 
             pass
         time.sleep(5)
         status, head, lenData = self.getResponse()
